@@ -1,7 +1,12 @@
 .DS_Store
 .idea
-config.inc.php
-public/journals
-public/site
+/config.inc.php
+public/journals/*
+public/site/*
 cache/*.php
-files
+cache/HTML/*
+cache/_db/*
+cache/t_cache/*
+cache/t_compile/*
+cache/t_config/*
+files/*
