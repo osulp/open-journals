@@ -4,14 +4,14 @@
 <!--
   * locale.xml
   *
-  * C* Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Weiterverbreitung nach GNU GPL v2. Die vollständigen Bedingungen für die Weiterverbreitung dieser Datei finden Sie unter docs/COPYING.
   
   * Version, erstellt durch die Freie Universität Berlin, Redaktionen Querelles-Net und Forum Qualitative Sozialforschung (FQS).
  
   * Frequently Asked Questions 
   *
-  * $Id$
   -->
 
 <topic id="intro/topic/000000" locale="de_DE" title="Einführung in OJS" toc="index/toc/000000" subtoc="intro/toc/000000" key="intro.index">
@@ -26,6 +26,6 @@
 <p align="center"><a href="{$baseUrl}/locale/{$locale}/edprocesslarge.png"><img src="{$baseUrl}/locale/{$locale}/edprocess.png" width="480" height="542" border="0" alt="" /></a></p>]]>
 	</section>
 	<section title="Unterstützung">
-		<![CDATA[<p>Technischer Support bzw. ein Fehlermelde- und Dokumentationssystem für technische Probleme finden Sie auf der PKP-<a href="http://pkp.sfu.ca/support/forum/" target="_blank">Webseite</a>.</p><p>Im Falle von Fragen zu spezifischen Zeitschriften, die OJS verwenden, können Sie sich an den Hauptkontakt oder an Supportkontakte wenden, die Sie auf den Zeitschriftenwebseiten unter "Über uns" finden.</p>]]>
+		<![CDATA[<p>Technischer Support bzw. ein Fehlermelde- und Dokumentationssystem für technische Probleme finden Sie auf der PKP-<a href="http://forum.pkp.sfu.ca/" target="_blank">Webseite</a>.</p><p>Im Falle von Fragen zu spezifischen Zeitschriften, die OJS verwenden, können Sie sich an den Hauptkontakt oder an Supportkontakte wenden, die Sie auf den Zeitschriftenwebseiten unter "Über uns" finden.</p>]]>
 	</section>
 </topic>

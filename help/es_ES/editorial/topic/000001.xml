@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000001.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Índice del proceso Editorial 
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Editor's Role Index 
   *
-  * $Id$
   -->
 
-<topic id="editorial/topic/000001" locale="es_ES" title="Rol del Editor" toc="editorial/toc/000000" subtoc="editorial/toc/000001" key="editorial.editorsRole">
+<topic id="editorial/topic/000001" locale="es_ES" title="Rol del editor/a" toc="editorial/toc/000000" subtoc="editorial/toc/000001" key="editorial.editorsRole">
 	<section>
-		<![CDATA[<p>El editor supervisa el proceso editorial, comenzando por asiganar un envío a un editor de la sección. Dependiendo de las políticas de la revista, frecuentemente el editor desempeña el papel del editor de la sección en la revisión de los envíos aceptados a través del proceso editorial.</p><p>El editor también puede crear y gestionar números de la revista, y notificar a los usuarios sobre nuevos números y/o eventos.</p>]]>	
+		<![CDATA[<p>El editor/a supervisa el proceso editorial, que comienza con la asignación de un editor/a de sección para el envío. Dependiendo de las políticas de la revista, el editor/a normalmente realiza el rol del editor/a de sección al revisar los envíos que se aceptaron en la fase de edición del proceso editorial.</p><p>Asimismo, también puede crear y gestionar números de la revista, así como notificar a los usuarios/as acerca de nuevos números o eventos.</p>]]>	
 	</section>
-</topic>
+</topic> 

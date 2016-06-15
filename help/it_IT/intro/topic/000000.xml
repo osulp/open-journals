@@ -4,13 +4,13 @@
 <!--
   * 000000.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Introduction to OJS Main 
   * Thanks to AePIC Team CILEA.
   *
-  * $Id: 000000.xml,v 1.10 2009/04/08 19:54:27 asmecher Exp $
   -->
 
 <topic id="intro/topic/000000" locale="it_IT" title="Introduzione a OJS" toc="index/toc/000000" subtoc="intro/toc/000000" key="intro.index">
@@ -26,7 +26,7 @@
 ]]>
 	</section>
 	<section title="Supporto">
-		<![CDATA[<p>Si pu&#x00F2; accedere via web al forum di supporto del PKP e ad un sistema di tracciamento dei bug tecnici <a href="http://pkp.sfu.ca/support/forum/" target="_blank">sito web</a>.</p>
+		<![CDATA[<p>Si pu&#x00F2; accedere via web al forum di supporto del PKP e ad un sistema di tracciamento dei bug tecnici <a href="http://forum.pkp.sfu.ca/" target="_blank">sito web</a>.</p>
 		<p>Gli utenti che hanno domande su come interagire con una particolare rivista del sito debbono contattare il riferimento principale di quella rivista,  che è indicato nella pagina delle informazioni delle varie riviste.</p>
 		<p>CILEA offre supporto e consulenza agli utenti atraverso l'attività del gruppo <a target="_blank" href="http://www.aepic.it/ojs.php">AePIC</a></p>]]>
 	</section>

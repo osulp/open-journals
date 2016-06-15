@@ -3,7 +3,8 @@
 /**
  * @file classes/security/Validation.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Validation
@@ -12,40 +13,40 @@
  * @brief Class providing user validation/authentication operations.
  */
 
-// $Id$
-
-
 import('classes.security.Role');
+import('classes.security.Hashing');
+
+define('IMPLICIT_AUTH_OPTIONAL', 'optional');
 
 class Validation {
 
 	/**
 	 * Authenticate user credentials and mark the user as logged in in the current session.
-	 * @param $username string
+	 * @param $username string authenticating user's id; null if implicit auth is happening
 	 * @param $password string unencrypted password
 	 * @param $reason string reference to string to receive the reason an account was disabled; null otherwise
 	 * @param $remember boolean remember a user's session past the current browser session
 	 * @return User the User associated with the login credentials, or false if the credentials are invalid
 	 */
 	function &login($username, $password, &$reason, $remember = false) {
-		$implicitAuth = Config::getVar('security', 'implicit_auth');
+		$implicitAuth = strtolower(Config::getVar('security', 'implicit_auth'));
 
 		$reason = null;
 		$valid = false;
 		$userDao =& DAORegistry::getDAO('UserDAO');
 
-		if ($implicitAuth) { // Implicit auth
+		if ($implicitAuth && !$username) { // Implicit auth, and not regular auth
 			if (!Validation::isLoggedIn()) {
 				PluginRegistry::loadCategory('implicitAuth');
 
 				// Call the implicitAuth hook. It will set user.
 
-			 	HookRegistry::call('ImplicitAuthPlugin::implicitAuth', array(&$user));
+				HookRegistry::call('ImplicitAuthPlugin::implicitAuth', array(&$user));
 
 				$valid=true;
 			}
 		} else { // Regular Auth
-			$user =& $userDao->getUserByUsername($username, true);
+			$user =& $userDao->getByUsername($username, true);
 
 			if (!isset($user)) {
 				// User does not exist
@@ -71,8 +72,13 @@ class Validation {
 					}
 				}
 			} else {
-				// Validate against OJS user database
-				$valid = ($user->getPassword() === Validation::encryptCredentials($username, $password));
+				// Validate against user database
+				$valid = Validation::verifyPassword($username, $password, $user->getPassword(), $rehash);
+
+				if ($valid && !empty($rehash)) {
+					// update to new hashing algorithm
+					$user->setPassword($rehash);
+				}
 			}
 		}
 
@@ -111,6 +117,34 @@ class Validation {
 
 			return $user;
 		}
+	}
+
+	/**
+	 * verify if the input password is correct
+	 *
+	 * @param string $username the string username
+	 * @param string $password the plaintext password
+	 * @param string $hash the password hash from the database
+	 * @param string &$rehash if password needs rehash, this variable is used
+	 * @return boolean
+	 */
+	function verifyPassword($username, $password, $hash, &$rehash) {
+		if (!Hashing::isSupported()) {
+			// modern hashing not supported
+			return $hash === Validation::encryptCredentials($username, $password, false, true);
+		} elseif (Hashing::needsRehash($hash)) {
+			// update to new hashing algorithm
+			$oldHash = Validation::encryptCredentials($username, $password, false, true);
+
+			if ($oldHash === $hash) {
+				// update hash
+				$rehash = Validation::encryptCredentials($username, $password);
+
+				return true;
+			}
+		}
+
+		return Hashing::isValid($password, $hash);
 	}
 
 	/**
@@ -160,7 +194,7 @@ class Validation {
 	 */
 	function checkCredentials($username, $password) {
 		$userDao =& DAORegistry::getDAO('UserDAO');
-		$user =& $userDao->getUserByUsername($username, false);
+		$user =& $userDao->getByUsername($username, false);
 
 		$valid = false;
 		if (isset($user)) {
@@ -172,7 +206,16 @@ class Validation {
 			if (isset($auth)) {
 				$valid = $auth->authenticate($username, $password);
 			} else {
-				$valid = ($user->getPassword() === Validation::encryptCredentials($username, $password));
+				// Validate against user database
+				$valid = Validation::verifyPassword($username, $password, $user->getPassword(), $rehash);
+
+				if ($valid && !empty($rehash)) {
+					// update to new hashing algorithm
+					$user->setPassword($rehash);
+
+					// save new password hash to database
+					$userDao->updateObject($user);
+				}
 			}
 		}
 
@@ -201,33 +244,42 @@ class Validation {
 		$user =& $session->getUser();
 
 		$roleDao =& DAORegistry::getDAO('RoleDAO');
-		return $roleDao->roleExists($journalId, $user->getId(), $roleId);
+		return $roleDao->userHasRole($journalId, $user->getId(), $roleId);
 	}
 
 	/**
 	 * Encrypt user passwords for database storage.
 	 * The username is used as a unique salt to make dictionary
 	 * attacks against a compromised database more difficult.
-	 * @param $username string username
+	 * @param $username string username (kept for backwards compatibility)
 	 * @param $password string unencrypted password
 	 * @param $encryption string optional encryption algorithm to use, defaulting to the value from the site configuration
+	 * @param $legacy boolean if true, use legacy hashing technique for backwards compatibility
 	 * @return string encrypted password
 	 */
-	function encryptCredentials($username, $password, $encryption = false) {
-		$valueToEncrypt = $username . $password;
-
-		if ($encryption == false) {
-			$encryption = Config::getVar('security', 'encryption');
+	function encryptCredentials($username, $password, $encryption = false, $legacy = null) {
+		if (!isset($legacy)) {
+			$legacy = !Hashing::isSupported();
 		}
 
-		switch ($encryption) {
-			case 'sha1':
-				if (function_exists('sha1')) {
-					return sha1($valueToEncrypt);
-				}
-			case 'md5':
-			default:
-				return md5($valueToEncrypt);
+		if ($legacy) {
+			$valueToEncrypt = $username . $password;
+
+			if ($encryption == false) {
+				$encryption = Config::getVar('security', 'encryption');
+			}
+
+			switch ($encryption) {
+				case 'sha1':
+					if (function_exists('sha1')) {
+						return sha1($valueToEncrypt);
+					}
+				case 'md5':
+				default:
+					return md5($valueToEncrypt);
+			}
+		} else {
+			return Hashing::getHash($password);
 		}
 	}
 
@@ -251,15 +303,61 @@ class Validation {
 	/**
 	 * Generate a hash value to use for confirmation to reset a password.
 	 * @param $userId int
+	 * @param $expiry int timestamp when hash expires, defaults to CURRENT_TIME + RESET_SECONDS
 	 * @return string (boolean false if user is invalid)
 	 */
-	function generatePasswordResetHash($userId) {
+	function generatePasswordResetHash($userId, $expiry = null) {
 		$userDao =& DAORegistry::getDAO('UserDAO');
 		if (($user = $userDao->getUser($userId)) == null) {
 			// No such user
 			return false;
 		}
-		return substr(md5($user->getId() . $user->getUsername() . $user->getPassword()), 0, 6);
+		// create hash payload
+		$salt = Config::getVar('security', 'salt');
+
+		if (empty($expiry)) {
+			$expires = (int) Config::getVar('security', 'reset_seconds', 7200);
+			$expiry = time() + $expires;
+		}
+
+		// use last login time to ensure the hash changes when they log in
+		$data = $user->getUsername() . $user->getPassword() . $user->getDateLastLogin() . $expiry;
+
+		// generate hash and append expiry timestamp
+		if (function_exists('hash_hmac')) {
+			$algos = hash_algos();
+
+			foreach (array('sha256', 'sha1', 'md5') as $algo) {
+				if (in_array($algo, $algos)) {
+					return hash_hmac($algo, $data, $salt) . ':' . $expiry;
+				}
+			}
+
+		} else if (function_exists('sha1')) {
+			// use SHA1 if HMAC not available
+			return sha1($data . $salt) . ':' . $expiry;
+		}
+
+		// fallback to MD5
+		return md5($data . $salt) . ':' . $expiry;
+	}
+
+	/**
+	 * Check if provided password reset hash is valid.
+	 * @param $userId int
+	 * @param $hash string
+	 * @return boolean
+	 */
+	function verifyPasswordResetHash($userId, $hash) {
+		// append ":" to ensure the explode results in at least 2 elements
+		list(, $expiry) = explode(':', $hash . ':');
+
+		if (empty($expiry) || ((int) $expiry < time())) {
+			// expired
+			return false;
+		}
+
+		return ($hash === Validation::generatePasswordResetHash($userId, $expiry));
 	}
 
 	/**

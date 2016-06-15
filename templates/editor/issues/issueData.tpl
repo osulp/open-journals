@@ -1,12 +1,11 @@
 {**
- * issueData.tpl
+ * templates/editor/issues/issueData.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Form for creation and modification of an issue
- *
- * $Id$
  *}
 {strip}
 {assign var="pageTitleTranslated" value=$issue->getIssueIdentification()}
@@ -24,7 +23,7 @@
 <br />
 
 <form action="#">
-{translate key="issue.issue"}: <select name="issue" class="selectMenu" onchange="if(this.options[this.selectedIndex].value > 0) location.href='{url|escape:"javascript" op="issueToc" path="ISSUE_ID" escape=false}'.replace('ISSUE_ID', this.options[this.selectedIndex].value)" size="1">{html_options options=$issueOptions selected=$issueId}</select>
+{translate key="issue.issue"}: <select name="issue" class="selectMenu" onchange="if(this.options[this.selectedIndex].value > 0) location.href='{url|escape:"javascript" op="issueToc" path="ISSUE_ID" escape=false}'.replace('ISSUE_ID', this.options[this.selectedIndex].value)" size="1">{html_options options=$issueOptions|truncate:40:"..." selected=$issueId}</select>
 </form>
 
 <div class="separator"></div>
@@ -32,10 +31,11 @@
 <ul class="menu">
 	<li><a href="{url op="issueToc" path=$issueId}">{translate key="issue.toc"}</a></li>
 	<li class="current"><a href="{url op="issueData" path=$issueId}">{translate key="editor.issues.issueData"}</a></li>
+	<li><a href="{url op="issueGalleys" path=$issueId}">{translate key="editor.issues.galleys"}</a></li>
 	{if $unpublished}<li><a href="{url page="issue" op="view" path=$issue->getBestIssueId()}">{translate key="editor.issues.previewIssue"}</a></li>{/if}
 </ul>
 
-<form name="issue" method="post" action="{url op="editIssue" path=$issueId}" enctype="multipart/form-data">
+<form id="issue" method="post" action="{url op="editIssue" path=$issueId}" enctype="multipart/form-data">
 <input type="hidden" name="fileName[{$formLocale|escape}]" value="{$fileName[$formLocale]|escape}" />
 <input type="hidden" name="originalFileName[{$formLocale|escape}]" value="{$originalFileName[$formLocale]|escape}" />
 {if $styleFileName}
@@ -80,7 +80,7 @@
 	{/if}
 	<tr valign="top">
 		<td class="label">{fieldLabel name="title" key="issue.title"}</td>
-		<td class="value"><input type="text" name="title[{$formLocale|escape}]" id="title" value="{$title[$formLocale]|escape}" size="40" maxlength="120" class="textField" /></td>
+		<td class="value"><input type="text" name="title[{$formLocale|escape}]" id="title" value="{$title[$formLocale]|escape}" size="40" class="textField" /></td>
 	</tr>
 	<tr valign="top">
 		<td class="label">{fieldLabel name="description" key="editor.issues.description"}</td>
@@ -103,6 +103,8 @@
 					{math|assign:"maxYear" equation="x+2" x=$currentYear}
 				{/if}
 				{html_select_date prefix="datePublished" time=$datePublished|default:"---" all_extra="class=\"selectMenu\"" start_year=$minYear end_year=$maxYear year_empty="-" month_empty="-" day_empty="-"}
+				<br/>
+				<input type="checkbox" id="resetArticlePublicationDates" name="resetArticlePublicationDates" />&nbsp;{fieldLabel name="resetArticlePublicationDates" key="editor.issues.resetArticlePublicationDates"}<br/>
 			{else}
 				{translate key="editor.issues.unpublished"}
 			{/if}
@@ -116,7 +118,8 @@
 	</tr>
 </table>
 </div>
-{if ($currentJournal->getSetting('publishingMode') == $smarty.const.PUBLISHING_MODE_SUBSCRIPTION && !$enableDelayedOpenAccess) || ($currentJournal->getSetting('publishingMode') == $smarty.const.PUBLISHING_MODE_SUBSCRIPTION && $enableDelayedOpenAccess && $issue->getPublished())}
+
+{if $currentJournal->getSetting('publishingMode') == $smarty.const.PUBLISHING_MODE_SUBSCRIPTION}
 <div class="separator"></div>
 <div id="issueAccess">
 <h3>{translate key="editor.issues.access"}</h3>
@@ -128,7 +131,7 @@
 	<tr valign="top">
 		<td class="label">{fieldLabel name="openAccessDate" key="editor.issues.accessDate"}</td>
 		<td class="value">
-			<input type="checkbox" id="enableOpenAccessDate" name="enableOpenAccessDate" {if $openAccessDate}checked="checked" {/if}onchange="document.issue.openAccessDateMonth.disabled=this.checked?false:true;document.issue.openAccessDateDay.disabled=this.checked?false:true;document.issue.openAccessDateYear.disabled=this.checked?false:true;" />&nbsp;{fieldLabel name="enableOpenAccessDate" key="editor.issues.enableOpenAccessDate"}<br/>
+			<input type="checkbox" id="enableOpenAccessDate" name="enableOpenAccessDate" {if $openAccessDate}checked="checked" {/if}onchange="document.getElementById('issue').openAccessDateMonth.disabled=this.checked?false:true;document.getElementById('issue').openAccessDateDay.disabled=this.checked?false:true;document.getElementById('issue').openAccessDateYear.disabled=this.checked?false:true;" />&nbsp;{fieldLabel name="enableOpenAccessDate" key="editor.issues.enableOpenAccessDate"}<br/>
 			{if $openAccessDate}
 				{html_select_date prefix=openAccessDate time=$openAccessDate end_year="+20" all_extra="class=\"selectMenu\""}
 			{else}
@@ -141,6 +144,14 @@
 {/if}
 
 <div class="separator"></div>
+
+{foreach from=$pubIdPlugins item=pubIdPlugin}
+	{assign var=pubIdMetadataFile value=$pubIdPlugin->getPubIdMetadataFile()}
+	{include file="$pubIdMetadataFile" pubObject=$issue}
+{/foreach}
+
+{call_hook name="Templates::Editor::Issues::IssueData::AdditionalMetadata"}
+
 <div id="issueCover">
 <h3>{translate key="editor.issues.cover"}</h3>
 <table width="100%" class="data">

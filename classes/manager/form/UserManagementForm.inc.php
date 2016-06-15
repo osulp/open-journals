@@ -3,7 +3,8 @@
 /**
  * @file classes/manager/form/UserManagementForm.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class UserManagementForm
@@ -11,9 +12,6 @@
  *
  * @brief Form for journal managers to edit user profiles.
  */
-
-// $Id$
-
 
 import('lib.pkp.classes.form.Form');
 
@@ -28,7 +26,8 @@ class UserManagementForm extends Form {
 	function UserManagementForm($userId = null) {
 		parent::Form('manager/people/userProfileForm.tpl');
 
-		if (!Validation::isJournalManager()) $userId = null;
+		$journal =& Request::getJournal();
+		if ($userId && !Validation::canAdminister($journal->getId(), $userId)) $userId = null;
 		$this->userId = isset($userId) ? (int) $userId : null;
 		$site =& Request::getSite();
 
@@ -38,7 +37,7 @@ class UserManagementForm extends Form {
 			$this->addCheck(new FormValidatorCustom($this, 'username', 'required', 'user.register.form.usernameExists', array(DAORegistry::getDAO('UserDAO'), 'userExistsByUsername'), array($this->userId, true), true));
 			$this->addCheck(new FormValidatorAlphaNum($this, 'username', 'required', 'user.register.form.usernameAlphaNumeric'));
 
-			if (!Config::getVar('security', 'implicit_auth')) {
+			if (!Config::getVar('security', 'implicit_auth') || strtolower(Config::getVar('security', 'implicit_auth')) === IMPLICIT_AUTH_OPTIONAL) {
 				$this->addCheck(new FormValidator($this, 'password', 'required', 'user.profile.form.passwordRequired'));
 				$this->addCheck(new FormValidatorLength($this, 'password', 'required', 'user.register.form.passwordLengthTooShort', '>=', $site->getMinPasswordLength()));
 				$this->addCheck(new FormValidatorCustom($this, 'password', 'required', 'user.register.form.passwordsDoNotMatch', create_function('$password,$form', 'return $password == $form->getData(\'password2\');'), array(&$this)));
@@ -68,7 +67,7 @@ class UserManagementForm extends Form {
 		$templateMgr->assign('source', Request::getUserVar('source'));
 		$templateMgr->assign('userId', $this->userId);
 		if (isset($this->userId)) {
-			$user =& $userDao->getUser($this->userId);
+			$user =& $userDao->getById($this->userId);
 			$templateMgr->assign('username', $user->getUsername());
 			$helpTopicId = 'journal.users.index';
 		} else {
@@ -113,7 +112,7 @@ class UserManagementForm extends Form {
 		);
 
 		// Send implicitAuth setting down to template
-		$templateMgr->assign('implicitAuth', Config::getVar('security', 'implicit_auth'));
+		$templateMgr->assign('implicitAuth', strtolower(Config::getVar('security', 'implicit_auth')));
 
 		$site =& Request::getSite();
 		$templateMgr->assign('availableLocales', $site->getSupportedLocaleNames());
@@ -142,7 +141,7 @@ class UserManagementForm extends Form {
 	function initData(&$args, &$request) {
 		if (isset($this->userId)) {
 			$userDao =& DAORegistry::getDAO('UserDAO');
-			$user =& $userDao->getUser($this->userId);
+			$user =& $userDao->getById($this->userId);
 
 			import('lib.pkp.classes.user.InterestManager');
 			$interestManager = new InterestManager();
@@ -160,6 +159,7 @@ class UserManagementForm extends Form {
 					'gender' => $user->getGender(),
 					'affiliation' => $user->getAffiliation(null), // Localized
 					'email' => $user->getEmail(),
+					'orcid' => $user->getData('orcid'),
 					'userUrl' => $user->getUrl(),
 					'phone' => $user->getPhone(),
 					'fax' => $user->getFax(),
@@ -182,9 +182,13 @@ class UserManagementForm extends Form {
 			$roleSymbolic = $roleDao->getRolePath($roleId);
 
 			$this->_data = array(
-				'enrollAs' => array($roleSymbolic)
+				'enrollAs' => array($roleSymbolic),
+				'generatePassword' => 1,
+				'sendNotify' => 1,
+				'mustChangePassword' => 1
 			);
 		}
+		return parent::initData();
 	}
 
 	/**
@@ -205,6 +209,7 @@ class UserManagementForm extends Form {
 			'signature',
 			'affiliation',
 			'email',
+			'orcid',
 			'userUrl',
 			'phone',
 			'fax',
@@ -244,6 +249,11 @@ class UserManagementForm extends Form {
 		return $userDao->getLocaleFieldNames();
 	}
 
+	function getAdditionalFieldNames() {
+		$userDao =& DAORegistry::getDAO('UserDAO');
+		return $userDao->getAdditionalFieldNames();
+	}
+
 	/**
 	 * Register a new user.
 	 */
@@ -252,7 +262,7 @@ class UserManagementForm extends Form {
 		$journal =& Request::getJournal();
 
 		if (isset($this->userId)) {
-			$user =& $userDao->getUser($this->userId);
+			$user =& $userDao->getById($this->userId);
 		}
 
 		if (!isset($user)) {
@@ -268,6 +278,7 @@ class UserManagementForm extends Form {
 		$user->setAffiliation($this->getData('affiliation'), null); // Localized
 		$user->setSignature($this->getData('signature'), null); // Localized
 		$user->setEmail($this->getData('email'));
+		$user->setData('orcid', $this->getData('orcid'));
 		$user->setUrl($this->getData('userUrl'));
 		$user->setPhone($this->getData('phone'));
 		$user->setFax($this->getData('fax'));
@@ -309,9 +320,8 @@ class UserManagementForm extends Form {
 				// FIXME Should try to create user here too?
 				$auth->doSetUserInfo($user);
 			}
-
+			parent::execute($user);
 			$userDao->updateObject($user);
-
 		} else {
 			$user->setUsername($this->getData('username'));
 			if ($this->getData('generatePassword')) {
@@ -332,6 +342,7 @@ class UserManagementForm extends Form {
 			}
 
 			$user->setDateRegistered(Core::getCurrentDate());
+			parent::execute($user);
 			$userId = $userDao->insertUser($user);
 
 			$isManager = Validation::isJournalManager();
@@ -356,7 +367,7 @@ class UserManagementForm extends Form {
 				// Send welcome email to user
 				import('classes.mail.MailTemplate');
 				$mail = new MailTemplate('USER_REGISTER');
-				$mail->setFrom($journal->getSetting('contactEmail'), $journal->getSetting('contactName'));
+				$mail->setReplyTo(null);
 				$mail->assignParams(array('username' => $this->getData('username'), 'password' => $password, 'userFullName' => $user->getFullName()));
 				$mail->addRecipient($user->getEmail(), $user->getFullName());
 				$mail->send();

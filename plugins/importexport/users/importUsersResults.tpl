@@ -1,12 +1,12 @@
 {**
- * importUsersResults.tpl
+ * plugins/importexport/users/importUsersResults.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Show the results of importing users.
  *
- * $Id$
  *}
 {strip}
 {assign var="pageTitle" value="plugins.importexport.users.import.importUsers"}
@@ -60,6 +60,6 @@
 </p>
 {/if}
 
-<p>&#187; <a href="{url page="manager"}">{translate key="manager.journalManagement"}</a></p>
+<p><a href="{url page="manager"}">{translate key="manager.journalManagement"}</a></p>
 </div>
 {include file="common/footer.tpl"}

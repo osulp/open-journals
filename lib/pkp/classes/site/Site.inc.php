@@ -7,7 +7,8 @@
 /**
  * @file classes/site/Site.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Site
@@ -16,8 +17,6 @@
  *
  * @brief Describes system-wide site properties.
  */
-
-// $Id$
 
 
 class Site extends DataObject {
@@ -54,6 +53,14 @@ class Site extends DataObject {
 	//
 	// Get/set methods
 	//
+
+	/**
+	 * Get site title.
+	 * @param $locale string Locale code to return, if desired.
+	 */
+	function getTitle($locale = null) {
+		return $this->getSetting('title', $locale);
+	}
 
 	/**
 	 * Get localized site title.
@@ -272,6 +279,11 @@ class Site extends DataObject {
 		return $setting;
 	}
 
+	/**
+	 * Get a localized setting using the current locale.
+	 * @param $name string Setting name
+	 * @return mixed
+	 */
 	function getLocalizedSetting($name) {
 		$returner = $this->getSetting($name, AppLocale::getLocale());
 		if ($returner === null) {

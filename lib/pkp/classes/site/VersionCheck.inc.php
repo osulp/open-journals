@@ -3,7 +3,8 @@
 /**
  * @file classes/site/VersionCheck.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class VersionCheck
@@ -26,10 +27,25 @@ class VersionCheck {
 	 * @return array
 	 */
 	function &getLatestVersion() {
-		$application =& PKPApplication::getApplication();
+		$application =& Application::getApplication();
+
+		$includeId = Config::getVar('general', 'installed') &&
+			!defined('RUNNING_UPGRADE') &&
+			Config::getVar('general', 'enable_beacon', true);
+
+		if ($includeId) {
+			$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO');
+			$uniqueSiteId = $pluginSettingsDao->getSetting(CONTEXT_SITE, 'UsageEventPlugin', 'uniqueSiteId');
+		} else $uniqueSiteId = null;
+
+		$request =& $application->getRequest();
 		$returner =& VersionCheck::parseVersionXML(
-			$application->getVersionDescriptorUrl()
+			$application->getVersionDescriptorUrl() .
+			($includeId?'?id=' . urlencode($uniqueSiteId) .
+				'&oai=' . urlencode($request->url('index', 'oai'))
+			:'')
 		);
+
 		return $returner;
 	}
 
@@ -131,39 +147,67 @@ class VersionCheck {
 	/**
 	 * Checks whether the given version file exists and whether it
 	 * contains valid data. Returns a Version object if everything
-	 * is ok, otherwise null.
+	 * is ok, otherwise null. If $returnErroMsg is true, returns the
+	 * error message.
 	 *
 	 * @param $versionFile string
-	 * @param $templateMgr TemplateManager
-	 * @return Version or null if invalid or missing version file
+	 * @param $returnErrorMesg boolean
+	 * @return Version or null/string if invalid or missing version file
 	 */
-	function &getValidPluginVersionInfo($versionFile, &$templateMgr) {
+	function &getValidPluginVersionInfo($versionFile, $returnErrorMsg = false) {
 		$nullVar = null;
-		if (FileManager::fileExists($versionFile)) {
+		$errorMsg = null;
+		$fileManager = new FileManager();
+		if ($fileManager->fileExists($versionFile)) {
 			$versionInfo =& VersionCheck::parseVersionXML($versionFile);
 		} else {
-			$templateMgr->assign('message', 'manager.plugins.versionFileNotFound');
-			return $nullVar;
+			$errorMsg = 'manager.plugins.versionFileNotFound';
 		}
-
-		$pluginVersion =& $versionInfo['version'];
 
 		// Validate plugin name and type to avoid abuse
-		$productType = explode(".", $versionInfo['type']);
-		if(count($productType) != 2 || $productType[0] != 'plugins') {
-			return $nullVar;
-			$templateMgr->assign('message', 'manager.plugins.versionFileInvalid');
-		}
-
-		$namesToValidate = array($pluginVersion->getProduct(), $productType[1]);
-		foreach($namesToValidate as $nameToValidate) {
-			if (!String::regexp_match('/[a-z][a-zA-Z0-9]+/', $nameToValidate)) {
-				return $nullVar;
-				$templateMgr->assign('message', 'manager.plugins.versionFileInvalid');
+		if (is_null($errorMsg)) {
+			$productType = explode(".", $versionInfo['type']);
+			if(count($productType) != 2 || $productType[0] != 'plugins') {
+				$errorMsg = 'manager.plugins.versionFileInvalid';
 			}
 		}
 
-		return $pluginVersion;
+		if (is_null($errorMsg)) {
+			$pluginVersion =& $versionInfo['version'];
+			$namesToValidate = array($pluginVersion->getProduct(), $productType[1]);
+			foreach($namesToValidate as $nameToValidate) {
+				if (!String::regexp_match('/[a-z][a-zA-Z0-9]+/', $nameToValidate)) {
+					$errorMsg = 'manager.plugins.versionFileInvalid';
+					break;
+				}
+			}
+		}
+
+		if ($errorMsg) {
+			if ($returnErrorMsg) {
+				return $errorMsg;
+			} else {
+				$templateMgr =& TemplateManager::getManager();
+				$templateMgr->assign('message', $errorMsg);
+				return $nullVar;
+			}
+		} else {
+			return $pluginVersion;
+		}
+	}
+
+	/**
+	 * Checks the application's version against the latest version 
+	 * on the PKP servers.
+	 * @return string or false if no newer version
+	 */
+	function checkIfNewVersionExists() {
+		$versionInfo =& VersionCheck::getLatestVersion();
+		$latestVersion = $versionInfo['release'];
+
+		$currentVersion =& VersionCheck::getCurrentDBVersion();
+		if($currentVersion->compare($latestVersion) < 0) return $latestVersion;
+		else return false;
 	}
 }
 

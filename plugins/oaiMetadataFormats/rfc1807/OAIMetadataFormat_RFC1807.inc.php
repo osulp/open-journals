@@ -3,7 +3,8 @@
 /**
  * @file plugins/oaiMetadataFormats/rfc1807/OAIMetadataFormat_RFC1807.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class OAIMetadataFormat_RFC1807
@@ -12,9 +13,6 @@
  *
  * @brief OAI metadata format class -- RFC 1807.
  */
-
-// $Id$
-
 
 class OAIMetadataFormat_RFC1807 extends OAIMetadataFormat {
 	/**

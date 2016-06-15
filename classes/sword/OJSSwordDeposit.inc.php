@@ -3,7 +3,8 @@
 /**
  * @file classes/sword/OJSSwordDeposit.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class OJSSwordDeposit
@@ -12,12 +13,9 @@
  * @brief Class providing a SWORD deposit wrapper for OJS articles
  */
 
-// $Id: CaptchaManager.inc.php,v 1.7 2010/01/22 20:42:41 asmecher Exp $
-
-
-require_once('./lib/pkp/lib/swordapp/swordappclient.php');
-require_once('./lib/pkp/lib/swordapp/swordappentry.php');
-require_once('./lib/pkp/lib/swordapp/packager_mets_swap.php');
+require_once('./lib/pkp/lib/swordappv2/swordappclient.php');
+require_once('./lib/pkp/lib/swordappv2/swordappentry.php');
+require_once('./lib/pkp/lib/swordappv2/packager_mets_swap.php');
 
 class OJSSwordDeposit {
 	/** @var $package SWORD deposit METS package */
@@ -55,10 +53,16 @@ class OJSSwordDeposit {
 		);
 
 		$journalDao =& DAORegistry::getDAO('JournalDAO');
-		$this->journal =& $journalDao->getJournal($article->getJournalId());
+		$this->journal =& $journalDao->getById($article->getJournalId());
 
 		$sectionDao =& DAORegistry::getDAO('SectionDAO');
 		$this->section =& $sectionDao->getSection($article->getSectionId());
+
+		$publishedArticleDao =& DAORegistry::getDAO('PublishedArticleDAO');
+		$publishedArticle = $publishedArticleDao->getPublishedArticleByArticleId($article->getId());
+
+		$issueDao =& DAORegistry::getDAO('IssueDAO');
+		if ($publishedArticle) $this->issue =& $issueDao->getIssueById($publishedArticle->getIssueId());
 
 		$this->article =& $article;
 	}
@@ -74,7 +78,7 @@ class OJSSwordDeposit {
 
 		// The article can be published or not. Support either.
 		if (is_a($this->article, 'PublishedArticle')) {
-			$doi = $this->article->getDOI();
+			$doi = $this->article->getPubId('doi');
 			if ($doi !== null) $this->package->setIdentifier($doi);
 		}
 
@@ -167,7 +171,7 @@ class OJSSwordDeposit {
 			$url, $username, $password,
 			'',
 			$this->outPath . '/deposit.zip',
-			'http://purl.org/net/sword-types/METSDSpaceSIP',
+			'http://purl.org/net/sword/package/METSDSpaceSIP',
 			'application/zip', false, true
 		);
 		return $response;

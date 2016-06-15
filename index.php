@@ -39,13 +39,14 @@
  * To learn more about developing OJS, there are several additional resources
  * that may be useful:
  * - The docs/README document
- * - The PKP support forum at http://pkp.sfu.ca/support/forum
+ * - The PKP support forum at http://forum.pkp.sfu.ca
  * - The technical reference (and other documents), available at
  *   http://pkp.sfu.ca/ojs_documentation
  *
  * @file index.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @ingroup index
@@ -54,8 +55,6 @@
  * dispatcher to delegate to the appropriate request handler.
  */
 
-// $Id$
-
 // Initialize global environment
 define('INDEX_FILE_LOCATION', __FILE__);
 require('./lib/pkp/includes/bootstrap.inc.php');
@@ -63,4 +62,5 @@ require('./lib/pkp/includes/bootstrap.inc.php');
 // Serve the request
 $application =& PKPApplication::getApplication();
 $application->execute();
+
 ?>

@@ -1,18 +1,18 @@
 {**
- * rss2.tpl
+ * plugins/generic/webFeed/templates/rss2.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * RSS 2 feed template
  *
- * $Id$
  *}
 <?xml version="1.0" encoding="{$defaultCharset|escape}"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://web.resource.org/cc/">
 	<channel>
 		{* required elements *}
-		<title>{$journal->getLocalizedTitle()|escape:"html"|strip}</title>
+		<title>{$journal->getLocalizedTitle()|strip|escape:"html"}</title>
 		<link>{$journal->getUrl()|escape}</link>
 
 		{if $journal->getLocalizedDescription()}
@@ -66,6 +66,15 @@
 					{* <comments/> *}
 					{* <source/> *}
 
+					<dc:rights>
+						{translate|escape key="submission.copyrightStatement" copyrightYear=$article->getCopyrightYear() copyrightHolder=$article->getLocalizedCopyrightHolder()}
+						{$article->getLicenseURL()|escape}
+					</dc:rights>
+					{if ($article->getAccessStatus() == $smarty.const.ARTICLE_ACCESS_OPEN || ($article->getAccessStatus() == $smarty.const.ARTICLE_ACCESS_ISSUE_DEFAULT && $issue->getAccessStatus() == $smarty.const.ISSUE_ACCESS_OPEN)) && $article->isCCLicense()}
+						<cc:license rdf:resource="{$article->getLicenseURL()|escape}" />
+					{else}
+						<cc:license></cc:license>
+					{/if}
 					<guid isPermaLink="true">{url page="article" op="view" path=$article->getBestArticleId($currentJournal)}</guid>
 					{if $article->getDatePublished()}
 						<pubDate>{$article->getDatePublished()|date_format:"%a, %d %b %Y %T %z"}</pubDate>

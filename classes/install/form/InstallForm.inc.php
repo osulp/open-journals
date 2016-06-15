@@ -7,7 +7,8 @@
 /**
  * @file classes/install/form/InstallForm.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class InstallForm
@@ -16,9 +17,6 @@
  *
  * @brief Form for system installation.
  */
-
-// $Id$
-
 
 import('classes.install.Install');
 import('lib.pkp.classes.site.VersionCheck');
@@ -101,6 +99,7 @@ class InstallForm extends Form {
 		$this->addCheck(new FormValidatorInSet($this, 'encryption', 'required', 'installer.form.encryptionRequired', array_keys($this->supportedEncryptionAlgorithms)));
 		$this->addCheck(new FormValidator($this, 'adminUsername', 'required', 'installer.form.usernameRequired'));
 		$this->addCheck(new FormValidatorAlphaNum($this, 'adminUsername', 'required', 'installer.form.usernameAlphaNumeric'));
+		$this->addCheck(new FormValidatorLength($this, 'adminPassword', 'required', 'user.register.form.passwordLengthTooShort', '>=', INSTALLER_DEFAULT_MIN_PASSWORD_LENGTH));
 		$this->addCheck(new FormValidator($this, 'adminPassword', 'required', 'installer.form.passwordRequired'));
 		$this->addCheck(new FormValidatorCustom($this, 'adminPassword', 'required', 'installer.form.passwordsDoNotMatch', create_function('$password,$form', 'return $password == $form->getData(\'adminPassword2\');'), array(&$this)));
 		$this->addCheck(new FormValidatorEmail($this, 'adminEmail', 'required', 'installer.form.emailRequired'));
@@ -120,12 +119,15 @@ class InstallForm extends Form {
 		$templateMgr->assign('connectionCharsetOptions', $this->supportedConnectionCharsets);
 		$templateMgr->assign('databaseCharsetOptions', $this->supportedDatabaseCharsets);
 		$templateMgr->assign('encryptionOptions', $this->supportedEncryptionAlgorithms);
+		$templateMgr->assign('allowFileUploads', get_cfg_var('file_uploads') ? __('common.yes') : __('common.no'));
+		$templateMgr->assign('maxFileUploadSize', get_cfg_var('upload_max_filesize'));
 		$templateMgr->assign('databaseDriverOptions', $this->checkDBDrivers());
 		$templateMgr->assign('supportsMBString', String::hasMBString() ? __('common.yes') : __('common.no'));
 		$templateMgr->assign('phpIsSupportedVersion', version_compare(PHP_REQUIRED_VERSION, PHP_VERSION) != 1);
 		$templateMgr->assign('phpRequiredVersion', PHP_REQUIRED_VERSION);
 		$templateMgr->assign('phpVersion', PHP_VERSION);
 		$templateMgr->assign('version', VersionCheck::getCurrentCodeVersion());
+		$templateMgr->assign('passwordLength',INSTALLER_DEFAULT_MIN_PASSWORD_LENGTH);
 
 		parent::display();
 	}
@@ -134,11 +136,14 @@ class InstallForm extends Form {
 	 * Initialize form data.
 	 */
 	function initData() {
-		$cwd = getcwd();
+		$docRoot = dirname($_SERVER['DOCUMENT_ROOT']);
 		if (Core::isWindows()) {
 			// Replace backslashes with slashes for the default files directory.
-			$cwd = str_replace('\\', '/', $cwd);
+			$docRoot = str_replace('\\', '/', $docRoot);
 		}
+
+		// Add a trailing slash for paths that aren't filesystem root
+		if ($docRoot !== '/') $docRoot .= '/';
 
 		$this->_data = array(
 			'locale' => AppLocale::getLocale(),
@@ -147,15 +152,15 @@ class InstallForm extends Form {
 			'connectionCharset' => '',
 			'databaseCharset' => '',
 			'encryption' => 'md5',
-			'filesDir' =>  $cwd . '/files',
-			'skipFilesDir' =>  0,
+			'filesDir' =>  $docRoot . 'files',
 			'databaseDriver' => 'mysql',
 			'databaseHost' => 'localhost',
 			'databaseUsername' => 'ojs',
 			'databasePassword' => '',
 			'databaseName' => 'ojs',
 			'createDatabase' => 1,
-			'oaiRepositoryId' => 'ojs.' . Request::getServerHost()
+			'oaiRepositoryId' => 'ojs.' . Request::getServerHost(),
+			'enableBeacon'=> true
 		);
 	}
 
@@ -170,7 +175,6 @@ class InstallForm extends Form {
 			'connectionCharset',
 			'databaseCharset',
 			'filesDir',
-			'skipFilesDir',
 			'encryption',
 			'adminUsername',
 			'adminPassword',
@@ -182,7 +186,8 @@ class InstallForm extends Form {
 			'databasePassword',
 			'databaseName',
 			'createDatabase',
-			'oaiRepositoryId'
+			'oaiRepositoryId',
+			'enableBeacon'
 		));
 
 		if ($this->getData('additionalLocales') == null || !is_array($this->getData('additionalLocales'))) {

@@ -3,15 +3,15 @@
 <!--
   * locale/pt_BR/countries.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Localized list of countries.
   *
-  * $Id$
   -->
 <countries>
-	<country name="Afganistão" code="AF"/>
+	<country name="Afeganistão" code="AF"/>
 	<country name="Åland, Ilhas" code="AX"/>
 	<country name="Albania" code="AL"/>
 	<country name="Argélia" code="DZ"/>

@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file WebFeedGatewayPlugin.inc.php
+ * @file plugins/generic/webFeed/WebFeedGatewayPlugin.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class WebFeedGatewayPlugin
@@ -12,9 +13,6 @@
  * @brief Gateway component of web feed plugin
  *
  */
-
-// $Id$
-
 
 import('classes.plugins.GatewayPlugin');
 
@@ -83,7 +81,7 @@ class WebFeedGatewayPlugin extends GatewayPlugin {
 	 * @return boolean
 	 */
 	function getEnabled() {
-		$plugin =& $this->getAnnouncementFeedPlugin();
+		$plugin =& $this->getWebFeedPlugin();
 		return $plugin->getEnabled(); // Should always be true anyway if this is loaded
 	}
 
@@ -100,6 +98,8 @@ class WebFeedGatewayPlugin extends GatewayPlugin {
 	 * Handle fetch requests for this plugin.
 	 */
 	function fetch($args) {
+		AppLocale::requireComponents(array(LOCALE_COMPONENT_APPLICATION_COMMON));
+
 		// Make sure we're within a Journal context
 		$journal =& Request::getJournal();
 		if (!$journal) return false;

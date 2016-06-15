@@ -3,7 +3,8 @@
 /**
  * @file pages/admin/AdminFunctionsHandler.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AdminFunctionsHandler
@@ -11,9 +12,6 @@
  *
  * @brief Handle requests for site administrative/maintenance functions. 
  */
-
-// $Id$
-
 
 import('lib.pkp.classes.site.Version');
 import('lib.pkp.classes.site.VersionDAO');
@@ -108,6 +106,30 @@ class AdminFunctionsHandler extends AdminHandler {
 		// Clear ADODB's cache
 		$userDao =& DAORegistry::getDAO('UserDAO'); // As good as any
 		$userDao->flushCache();
+
+		Request::redirect(null, 'admin');
+	}
+
+	/**
+	 * Download scheduled task execution log file.
+	 */
+	function downloadScheduledTaskLogFile() {
+		$this->validate();
+		$application =& Application::getApplication();
+		$request =& $application->getRequest();
+
+		$file = basename($request->getUserVar('file'));
+		import('lib.pkp.classes.scheduledTask.ScheduledTaskHelper');
+		ScheduledTaskHelper::downloadExecutionLog($file);
+	}
+	
+	/**
+	 * Clear scheduled tasks execution logs.
+	 */
+	function clearScheduledTaskLogFiles() {
+		$this->validate();
+		import('lib.pkp.classes.scheduledTask.ScheduledTaskHelper');
+		ScheduledTaskHelper::clearExecutionLogs();	
 
 		Request::redirect(null, 'admin');
 	}

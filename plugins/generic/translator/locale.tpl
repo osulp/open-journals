@@ -1,12 +1,12 @@
 {**
- * locale.tpl
+ * plugins/generic/translator/locale.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * List of component locales to edit for a particular locale
  *
- * $Id$
  *}
 {strip}
 {translate|assign:"pageTitleTranslated" key="plugins.generic.translator.locale" locale=$locale}
@@ -150,7 +150,7 @@
 	<tr><td colspan="3" class="headseparator">&nbsp;</td></tr>
 	<tr class="heading" valign="bottom">
 		<td width="35%">{translate key="manager.emails.emailKey"}</td>
-		<td width="50%">{translate key="plugins.generic.translator.file.filename"}</td>
+		<td width="50%">{translate key="email.subject"}</td>
 		<td width="15%">{translate key="common.action"}</td>
 	</tr>
 	<tr><td colspan="3" class="headseparator">&nbsp;</td></tr>

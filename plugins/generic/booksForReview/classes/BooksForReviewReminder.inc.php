@@ -3,11 +3,12 @@
 /**
  * @file plugins/generic/booksForReview/classes/BooksForReviewReminder.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class BooksForReviewReminder
- * @ingroup plugins_generic_booksForReview 
+ * @ingroup plugins_generic_booksForReview
  *
  * @brief Class to perform automated reminders for book reviewers.
  */
@@ -20,11 +21,18 @@ class BooksForReviewReminder extends ScheduledTask {
 	 * Constructor.
 	 */
 	function BooksForReviewReminder() {
-		$this->ScheduledTask();
+		parent::ScheduledTask();
 	}
 
 	/**
-	 * Send email to a book for review author 
+	 * @see ScheduledTask::getName()
+	 */
+	function getName() {
+		return __('plugins.generic.booksForReview.reminderTask.name');
+	}
+
+	/**
+	 * Send email to a book for review author
 	 */
 	function sendReminder($book, $journal, $emailKey) {
 		$journalId = $journal->getId();
@@ -40,7 +48,7 @@ class BooksForReviewReminder extends ScheduledTask {
 		import('classes.mail.MailTemplate');
 		$mail = new MailTemplate($emailKey);
 
-		$mail->setFrom($book->getEditorEmail(), $book->getEditorFullName());
+		$mail->setReplyTo($book->getEditorEmail(), $book->getEditorFullName());
 		$mail->addRecipient($book->getUserEmail(), $book->getUserFullName());
 		$mail->setSubject($mail->getSubject($journal->getPrimaryLocale()));
 		$mail->setBody($mail->getBody($journal->getPrimaryLocale()));
@@ -49,7 +57,7 @@ class BooksForReviewReminder extends ScheduledTask {
 	}
 
 	/**
-	 * Send email to a journal's book for review authors 
+	 * Send email to a journal's book for review authors
 	 */
 	function sendJournalReminders($journal, $curDate) {
 		// FIXME: This shouldn't be hard-coded here
@@ -143,11 +151,11 @@ class BooksForReviewReminder extends ScheduledTask {
 	}
 
 	/**
-	 * Run this scheduled task. 
+	 * @see ScheduledTask::executeActions()
 	 */
-	function execute() {
+	function executeActions() {
 		$journalDao =& DAORegistry::getDAO('JournalDAO');
-		$journals =& $journalDao->getEnabledJournals();
+		$journals =& $journalDao->getJournals(true);
 
 		$todayDate = array(
 						'year' => date('Y'),
@@ -178,7 +186,7 @@ class BooksForReviewReminder extends ScheduledTask {
 				$curDate['year'] = $todayDate['year'];
 			}
 
-			$journals =& $journalDao->getEnabledJournals();
+			$journals =& $journalDao->getJournals(true);
 
 			while (!$journals->eof()) {
 				$journal =& $journals->next();
@@ -197,7 +205,7 @@ class BooksForReviewReminder extends ScheduledTask {
 			$curDate['month'] = 2;
 			$curDate['year'] = $todayDate['year'];
 
-			$journals =& $journalDao->getEnabledJournals();
+			$journals =& $journalDao->getJournals(true);
 
 			while (!$journals->eof()) {
 				$journal =& $journals->next();
@@ -212,7 +220,7 @@ class BooksForReviewReminder extends ScheduledTask {
 
 				$curDate['day'] = 29;
 
-				$journals =& $journalDao->getEnabledJournals();
+				$journals =& $journalDao->getJournals(true);
 
 				while (!$journals->eof()) {
 					$journal =& $journals->next();
@@ -223,6 +231,8 @@ class BooksForReviewReminder extends ScheduledTask {
 				}
 			}
 		}
+
+		return true;
 	}
 }
 

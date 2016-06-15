@@ -3,7 +3,8 @@
 /**
  * @file classes/submission/form/comment/CommentForm.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CommentForm
@@ -12,9 +13,6 @@
  *
  * @brief Comment form.
  */
-
-// $Id$
-
 
 import('lib.pkp.classes.form.Form');
 
@@ -40,6 +38,8 @@ class CommentForm extends Form {
 	 * @param $article object
 	 */
 	function CommentForm($article, $commentType, $roleId, $assocId = null) {
+		AppLocale::requireComponents(array(LOCALE_COMPONENT_OJS_EDITOR)); // editor.article.commentsRequired
+
 		if ($commentType == COMMENT_TYPE_PEER_REVIEW) {
 			parent::Form('submission/comment/peerReviewComment.tpl');
 		} else if ($commentType == COMMENT_TYPE_EDITOR_DECISION) {
@@ -125,14 +125,14 @@ class CommentForm extends Form {
 	 * Email the comment.
 	 * @param $recipients array of recipients (email address => name)
 	 */
-	function email($recipients) {
+	function email($recipients, $request) {
 		$article = $this->article;
 		$articleCommentDao =& DAORegistry::getDAO('ArticleCommentDAO');
 		$journal =& Request::getJournal();
 
 		import('classes.mail.ArticleMailTemplate');
 		$email = new ArticleMailTemplate($article, 'SUBMISSION_COMMENT');
-		$email->setFrom($this->user->getEmail(), $this->user->getFullName());
+		$email->setReplyTo($this->user->getEmail(), $this->user->getFullName());
 
 		$commentText = $this->getData('comments');
 
@@ -146,7 +146,7 @@ class CommentForm extends Form {
 				'comments' => String::html2text($commentText)
 			);
 
-			$email->sendWithParams($paramArray);
+			$email->sendWithParams($paramArray, $request);
 			$email->clearRecipients();
 		}
 	}

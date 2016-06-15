@@ -3,7 +3,8 @@
 /**
  * @file classes/mail/SMTPMailer.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class SMTPMailer
@@ -13,8 +14,6 @@
  *
  * TODO: TLS support
  */
-
-// $Id$
 
 
 import('lib.pkp.classes.mail.Mail');
@@ -71,7 +70,7 @@ class SMTPMailer {
 			return $this->disconnect('Did not receive expected 220');
 
 		// Send HELO/EHLO command
-		$serverHost = preg_replace("/:\d*$/", '', Request::getServerHost());
+		$serverHost = Request::getServerHost(null, false);
 		if (!$this->send($this->auth ? 'EHLO' : 'HELO', $serverHost))
 			return $this->disconnect('Could not send HELO/HELO');
 

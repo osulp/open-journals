@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000000.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Índice de la Página de Ayuda 
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Index Help Page 
   *
-  * $Id$
   -->
 
-<topic id="index/topic/000000" locale="es_ES" title="OJS Ayuda" toc="index/toc/000000" key="index.index">
+<topic id="index/topic/000000" locale="es_ES" title="Ayuda de OJS" toc="index/toc/000000" key="index.index">
 	<section>
-		<![CDATA[<p>El documento de Ayuda para el Open Journal Systems (OJS) esta diseñado para asistir a los usuarios en el proceso de lectura, envío, edición, y publicación de artículos en revistas especializadas o de interés general &mdash;. La intención es que también sirva como un manual para OJS que describa el alcance y los trabajos de este software de administración de revistas. El documento de Ayuda también da consejos editoriales sobre prácticas de periodismo comunes en la publicación especializada. Además de este documento de ayuda, los usuarios tienen acceso personal de asistencia técnica de esta revista quienes estarán listados en sobre la Revista, bajo Contacto.</p><p> Ya que OJS utiliza roles títulos de publicación desigandos para cada función o proceso &mdash; desde el Administrador de la Revista que se encarga de la configuración de la revista hasta el autor que se encarga de la correción de pruebas de las galeras &mdash; cada punto tratado en la ayuda se refiere al rol que debe ser desempeñado en cada tarea. Basado en ele mismo principio, el acceso a este documento está determinado por la persona que esta trabajando dentro del sistema. La ayuda es específica al contexto; una persona se encarga de algo dependiendo del rol en OJS  (un revisor también puede ser un autor y un administrador de la revista y de igual manera un editor). También depende en que parte de OJS está trabajando una persona para determinar de guía de encarga. El rol y la ubicación determina que temas de la Ayuda aparecerán, sin embargo, los usuarios pueden explorar desde ahí, temas relacionados para comprender cualquier aspecto del sistema.</p><p><i>Buscar</i> En la esquina superior derecha de cada página de ayuda, hay un enlace de "Buscar". Al introducir una palabra clave, UD obtendrá una lista de artículos de la ayuda relacionados con su búsqueda, Estos artículos incluyen una descripción breve y un enlace al artículo.</p><p><i>Tabl de Contenidos</i> Al pulsar sobre este enlace obtendrá una tabla de contenidos de la ayuda disponible.</p><p><i>Subir un nivel</i> Al pulsar sobre este enlace UD. subirá un nivel en la jerarquía de la ayuda. Por ejemplo, si UD. estaba viendo el "Explorador de Archivos", el nivel superior será  "Administración de Páginas".</p>]]>
+		<![CDATA[<p>El documento de ayuda de Open Journal Systems (OJS) está diseñado para ayudar a los usuarios/as durante el proceso de lectura, envío, edición y publicación de elementos en revistas académicas y de interés general. También está pensado para servir como un manual de OJS en el que se describe el ámbito de uso y el funcionamiento de este software de gestión de revistas. El documento Ayuda también proporciona consejos de redacción acerca de las prácticas comunes llevadas a cabo para publicaciones académicas. Además del documento Ayuda, los usuarios/as pueden recurrir a la persona encargada de la asistencia técnica de la revista. Dicha persona figura en la sección Sobre la revista, en el apartado Contacto.</p><p>OJS designa diferentes roles de publicación o títulos para cada función y proceso (desde el gestor/a de la revista que ve la configuración de la revista hasta el autor/a que corrige las galeradas). Por eso, cada tema recogido en Ayuda hace referencia al rol que tendría que desempeñar cada tarea. Del mismo modo, el acceso al documento está determinado por el papel que se desempeña dentro del sistema. La Ayuda varía según el contexto, lo que se muestra depende del rol de cada uno. Los usuarios/as pueden tener más de un rol en OJS: un revisor/a puede ser también autor/a y un gestor/a de la revista puede realizar también tarea de editor/a. Lo que uno ve también depende de la sección de OJS donde se esté trabajando. El rol y la ubicación donde se trabaja determinan el tema de ayuda que se muestra, aunque el usuario/a puede acceder también a otros temas relacionados para explorar cualquier aspecto del sistema.</p><p><em>Búsqueda</em> En la parte superior derecha de cada página de ayuda hay un enlace de "Búsqueda". Al introducir una palabra clave se mostrará una lista de los elementos de ayuda adecuados, una breve descripción de cada elemento y un enlace al elemento correspondiente.</p><p><em>Tabla de contenidos</em> Al hacer clic en este enlace se creará una tabla de contenidos de la ayuda disponible.</p><p><em>Subir un nivel</em> Al hacer clic en este enlace se llega a un nivel superior en la jerarquía de ayuda. Por ejemplo, desde la sección "Explorador de archivos", el nivel superior sería "Páginas de gestión".</p>]]>
 </section>
-</topic>
+</topic> 

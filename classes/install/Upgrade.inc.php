@@ -3,7 +3,8 @@
 /**
  * @file classes/install/Upgrade.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Upgrade
@@ -43,7 +44,8 @@ class Upgrade extends Installer {
 	 */
 	function rebuildSearchIndex() {
 		import('classes.search.ArticleSearchIndex');
-		ArticleSearchIndex::rebuildIndex();
+		$articleSearchIndex = new ArticleSearchIndex();
+		$articleSearchIndex->rebuildIndex();
 		return true;
 	}
 
@@ -89,7 +91,7 @@ class Upgrade extends Installer {
 		while (!$result->EOF) {
 			$row = $result->GetRowAssoc(false);
 			$journalId = $row['journal_id'];
-			$journal =& $journalDao->getJournal($journalId);
+			$journal =& $journalDao->getById($journalId);
 			$rt = new JournalRT($journalId);
 			$rt->setEnabled(true); // No toggle in prior OJS; assume true
 			$rt->setVersion($row['version_id']);
@@ -98,7 +100,6 @@ class Upgrade extends Installer {
 			$rt->setViewMetadata($row['view_metadata']);
 			$rt->setSupplementaryFiles($row['supplementary_files']);
 			$rt->setPrinterFriendly($row['printer_friendly']);
-			$rt->setAuthorBio($row['author_bio']);
 			$rt->setDefineTerms($row['define_terms']);
 
 			$journal->updateSetting('enableComments', $row['add_comment']?COMMENTS_AUTHENTICATED:COMMENTS_DISABLED);
@@ -171,7 +172,7 @@ class Upgrade extends Installer {
 				case 3: // ISSUE_LABEL_YEAR
 					$settings['publicationFormatYear'] = true;
 					break;
- 				case 2: // ISSUE_LABEL_VOL_YEAR
+				case 2: // ISSUE_LABEL_VOL_YEAR
 					$settings['publicationFormatVolume'] = true;
 					$settings['publicationFormatYear'] = true;
 					break;
@@ -303,7 +304,6 @@ class Upgrade extends Installer {
 			'metaCoverageChronExamples' => 'metaCoverageChronExamples',
 			'metaCoverageResearchSampleExamples' => 'metaCoverageResearchSampleExamples',
 			'metaTypeExamples' => 'metaTypeExamples',
-			'metaCitations' => 'metaCitations',
 			// Setup page 4
 			'pubFreqPolicy' => 'pubFreqPolicy',
 			'copyeditInstructions' => 'copyeditInstructions',
@@ -444,10 +444,10 @@ class Upgrade extends Installer {
 	function migrateUserSettings() {
 		$userSettingsDao =& DAORegistry::getDAO('UserSettingsDAO');
 
-		$result =& $userSettingsDao->retrieve('SELECT user_id, setting_name, journal_id, setting_value, setting_type FROM user_settings_old');
+		$result =& $userSettingsDao->retrieve('SELECT u.user_id, u.setting_name, u.setting_value, u.setting_type, s.primary_locale FROM user_settings_old u, site s');
 		while (!$result->EOF) {
 			$row = $result->GetRowAssoc(false);
-			$userSettingsDao->update('INSERT INTO user_settings (user_id, setting_name, assoc_id, setting_value, setting_type, locale) VALUES (?, ?, ?, ?, ?, ?)', array($row['user_id'], $row['setting_name'], (int) $row['journal_id'], $row['setting_value'], $row['setting_type'], ''));
+			$userSettingsDao->update('INSERT INTO user_settings (user_id, setting_name, assoc_id, setting_value, setting_type, locale) VALUES (?, ?, ?, ?, ?, ?)', array($row['user_id'], $row['setting_name'], (int) $row['journal_id'], $row['setting_value'], $row['setting_type'], $row['primary_locale']));
 			$result->MoveNext();
 		}
 		$result->Close();
@@ -467,7 +467,7 @@ class Upgrade extends Installer {
 	 */
 	function dropAllIndexes() {
 		$siteDao =& DAORegistry::getDAO('SiteDAO');
-		$dict = NewDataDictionary($siteDao->_dataSource);
+		$dict = NewDataDictionary($siteDao->getDataSource());
 		$dropIndexSql = array();
 
 		// This is a list of tables that were used in 2.1.1 (i.e.
@@ -768,6 +768,160 @@ class Upgrade extends Installer {
 	}
 
 	/**
+	 * For 2.4 Upgrade -- Overhaul notification structure
+	 */
+	function migrateNotifications() {
+		$notificationDao =& DAORegistry::getDAO('NotificationDAO');
+
+		// Retrieve all notifications from pre-2.4 notifications table
+		$result =& $notificationDao->retrieve('SELECT * FROM notifications_old');
+		while (!$result->EOF) {
+			$row = $result->GetRowAssoc(false);
+			$type = $row['assoc_type'];
+			$url = $row['location'];
+
+			// Get the ID of the associated object from the URL and store in $matches.
+			//  This value will not be set in all cases.
+			preg_match_all('/\d+/', $url, $matches);
+
+			// Set the base data for the notification
+			$notification = $notificationDao->newDataObject();
+			$notification->setId($row['notification_id']);
+			$notification->setUserId($row['user_id']);
+			$notification->setLevel(NOTIFICATION_LEVEL_NORMAL);
+			$notification->setDateCreated($notificationDao->datetimeFromDB($row['date_created']));
+			$notification->setDateRead($notificationDao->datetimeFromDB($row['date_read']));
+			$notification->setContextId($row['context']);
+			$notification->setType($type);
+
+			switch($type) {
+				case NOTIFICATION_TYPE_COPYEDIT_COMMENT:
+				case NOTIFICATION_TYPE_PROOFREAD_COMMENT:
+				case NOTIFICATION_TYPE_METADATA_MODIFIED:
+				case NOTIFICATION_TYPE_SUBMISSION_COMMENT:
+				case NOTIFICATION_TYPE_LAYOUT_COMMENT:
+				case NOTIFICATION_TYPE_ARTICLE_SUBMITTED:
+				case NOTIFICATION_TYPE_SUPP_FILE_MODIFIED:
+				case NOTIFICATION_TYPE_GALLEY_MODIFIED:
+				case NOTIFICATION_TYPE_REVIEWER_COMMENT:
+				case NOTIFICATION_TYPE_REVIEWER_FORM_COMMENT:
+				case NOTIFICATION_TYPE_EDITOR_DECISION_COMMENT:
+					$id = array_pop($matches[0]);
+					$notification->setAssocType(ASSOC_TYPE_ARTICLE);
+					$notification->setAssocId($id);
+					break;
+				case NOTIFICATION_TYPE_USER_COMMENT:
+					// Remove the last two elements of the array.  They refer to the
+					//  galley and parent, which we no longer use
+					$matches = array_slice($matches[0], -3);
+					$id = array_shift($matches);
+					$notification->setAssocType(ASSOC_TYPE_ARTICLE);
+					$notification->setAssocId($id);
+					$notification->setType(NOTIFICATION_TYPE_USER_COMMENT);
+					break;
+				case NOTIFICATION_TYPE_PUBLISHED_ISSUE:
+					// We do nothing here, as our URL points to the current issue
+					break;
+				case NOTIFICATION_TYPE_NEW_ANNOUNCEMENT:
+					$id = array_pop($matches[0]);
+					$notification->setAssocType(ASSOC_TYPE_ANNOUNCEMENT);
+					$notification->setAssocId($id);
+					$notification->setType(NOTIFICATION_TYPE_NEW_ANNOUNCEMENT);
+					break;
+			}
+
+			$notificationDao->update(
+				sprintf('INSERT INTO notifications
+						(user_id, level, date_created, date_read, context_id, type, assoc_type, assoc_id)
+					VALUES
+						(?, ?, %s, %s, ?, ?, ?, ?)',
+					$notificationDao->datetimeToDB($notification->getDateCreated()), $notificationDao->datetimeToDB($notification->getDateRead())),
+				array(
+					(int) $notification->getUserId(),
+					(int) $notification->getLevel(),
+					(int) $notification->getContextId(),
+					(int) $notification->getType(),
+					(int) $notification->getAssocType(),
+					(int) $notification->getAssocId()
+				)
+			);
+			unset($notification);
+			$result->MoveNext();
+		}
+
+		$result->Close();
+		unset($result);
+
+
+		// Retrieve all settings from pre-2.4 notification_settings table
+		$result =& $notificationDao->retrieve('SELECT * FROM notification_settings_old');
+		while (!$result->EOF) {
+			$row = $result->GetRowAssoc(false);
+			$settingName = $row['setting_name'];
+			$contextId = $row['context'];
+
+			switch ($settingName) {
+				case 'email':
+				case 'notify':
+					$notificationType = $row['setting_value'];
+					$newSettingName = ($settingName == 'email' ? 'emailed_notification' : 'blocked_notification');
+					$userId = $row['user_id'];
+
+					$notificationDao->update(
+						'INSERT INTO notification_subscription_settings
+							(setting_name, setting_value, user_id, context, setting_type)
+							VALUES
+							(?, ?, ?, ?, ?)',
+						array(
+							$newSettingName,
+							(int) $notificationType,
+							(int) $userId,
+							(int) $contextId,
+							'int'
+						)
+					);
+					break;
+				case 'mailList':
+				case 'mailListUnconfirmed':
+					$confirmed = ($settingName == 'mailList') ? 1 : 0;
+					$email = $row['setting_value'];
+					$settingId = $row['setting_id'];
+
+					// Get the token from the access_keys table
+					$accessKeyDao =& DAORegistry::getDAO('AccessKeyDAO'); /* @var $accessKeyDao AccessKeyDAO */
+					$accessKey =& $accessKeyDao->getAccessKeyByUserId('MailListContext', $settingId);
+					if(!$accessKey) continue;
+					$token = $accessKey->getKeyHash();
+
+					// Delete the access key -- we don't need it anymore
+					$accessKeyDao->deleteObject($accessKey);
+
+					$notificationDao->update(
+						'INSERT INTO notification_mail_list
+							(email, context, token, confirmed)
+							VALUES
+							(?, ?, ?, ?)',
+						array(
+							$email,
+							(int) $contextId,
+							$token,
+							$confirmed
+						)
+					);
+					break;
+			}
+
+			$result->MoveNext();
+		}
+
+		$result->Close();
+		unset($result);
+
+		return true;
+	}
+
+
+	/**
 	 * For 2.3.7 Upgrade -- Remove author revised file upload IDs erroneously added to copyedit signoff
 	 */
 	function removeAuthorRevisedFilesFromSignoffs() {
@@ -813,7 +967,7 @@ class Upgrade extends Installer {
 
 		// Get all interests for all users
 		$result =& $interestDao->retrieve(
-			'SELECT	DISTINCT cves.setting_value as interest_keyword,
+			'SELECT DISTINCT cves.setting_value as interest_keyword,
 				cv.assoc_id as user_id
 			FROM	controlled_vocabs cv
 				LEFT JOIN controlled_vocab_entries cve ON (cve.controlled_vocab_id = cv.controlled_vocab_id)
@@ -870,7 +1024,309 @@ class Upgrade extends Installer {
 		unset($result);
 
 		// Remove the obsolete interest data
-		$interestDao->update('DELETE FROM controlled_vocabs WHERE symbolic = ? AND assoc_type > 0', array('interest'));
+		$interestDao->update('DELETE FROM controlled_vocabs WHERE symbolic = ?  AND assoc_type > 0', array('interest'));
+
+		return true;
+	}
+
+	/**
+	* For 2.4 upgrade: migrate COUNTER statistics to the metrics table.
+	*/
+	function migrateCounterPluginUsageStatistics() {
+		$metricsDao =& DAORegistry::getDAO('MetricsDAO'); /* @var $metricsDao MetricsDAO */
+		$result =& $metricsDao->retrieve('SELECT * FROM counter_monthly_log');
+		if ($result->EOF) return true;
+
+		$loadId = '2.4.2-upgrade-counter';
+		$metricsDao->purgeLoadBatch($loadId);
+
+		$fileTypeCounts = array(
+				'count_html' => STATISTICS_FILE_TYPE_HTML,
+				'count_pdf' => STATISTICS_FILE_TYPE_PDF,
+				'count_other' => STATISTICS_FILE_TYPE_OTHER
+		);
+
+		while(!$result->EOF) {
+			$row =& $result->GetRowAssoc(false);
+			foreach ($fileTypeCounts as $countType => $fileType) {
+				$month = (string) $row['month'];
+				if (strlen($month) == 1) {
+					$month = '0' . $month;
+				}
+				if ($row[$countType]) {
+					$record = array(
+							'load_id' => $loadId,
+							'assoc_type' => ASSOC_TYPE_JOURNAL,
+							'assoc_id' => $row['journal_id'],
+							'metric_type' => OJS_METRIC_TYPE_LEGACY_COUNTER,
+							'metric' => $row[$countType],
+							'file_type' => $fileType,
+							'month' => $row['year'] . $month
+					);
+					$errorMsg = null;
+					$metricsDao->insertRecord($record, $errorMsg);
+				}
+			}
+			$result->MoveNext();
+		}
+
+		// Remove the plugin settings.
+		$metricsDao->update('delete from plugin_settings where plugin_name = ?', array('counterplugin'), false);
+
+		return true;
+	}
+
+	/**
+	 * For 2.4 upgrade: migrate Timed views statistics to the metrics table.
+	 */
+	function migrateTimedViewsUsageStatistics() {
+		$metricsDao =& DAORegistry::getDAO('MetricsDAO'); /* @var $metricsDao MetricsDAO */
+		$result =& $metricsDao->retrieve('SELECT * FROM timed_views_log');
+		if ($result->EOF) return true;
+
+		$loadId = '2.4.2-upgrade-timedViews';
+		$metricsDao->purgeLoadBatch($loadId);
+
+		$plugin =& PluginRegistry::getPlugin('generic', 'usagestatsplugin');
+		$plugin->import('UsageStatsTemporaryRecordDAO');
+		$tempStatsDao = new UsageStatsTemporaryRecordDAO();
+		$tempStatsDao->deleteByLoadId($loadId);
+
+		import('plugins.generic.usageStats.GeoLocationTool');
+		$geoLocationTool = new GeoLocationTool();
+
+		$articleGalleyDao =& DAORegistry::getDAO('ArticleGalleyDAO'); /* @var $articleGalleyDao ArticleGalleyDAO */
+
+		while(!$result->EOF) {
+			$row =& $result->GetRowAssoc(false);
+			$result->MoveNext();
+
+			list($countryId, $cityName, $region) = $geoLocationTool->getGeoLocation($row['ip_address']);
+			$fileType = null;
+			if ($row['galley_id']) {
+				// Get the file type.
+				$galley =& $articleGalleyDao->getGalley($row['galley_id']);
+				if (is_a($galley, 'ArticleGalley')) {
+					if ($galley->isHTMLGalley()) $fileType = STATISTICS_FILE_TYPE_HTML;
+					if ($galley->isPdfGalley()) $fileType = STATISTICS_FILE_TYPE_PDF;
+					if (!$fileType) $fileType = STATISTICS_FILE_TYPE_OTHER;
+				} else {
+					// No galley.
+					continue;
+				}
+				$assocType = ASSOC_TYPE_GALLEY;
+				$assocId = $row['galley_id'];
+			} else {
+				$assocType = ASSOC_TYPE_ARTICLE;
+				$assocId = $row['article_id'];
+			};
+
+			$recordTimestamp = strtotime($row['date']);
+			$day = date('Ymd', $recordTimestamp);
+			$tempStatsDao->insert($assocType, $assocId, $day, $recordTimestamp, $countryId, $region, $cityName, $fileType, $loadId);
+		}
+
+		switch (Config::getVar('database', 'driver')) {
+			case 'mysql':
+			default:
+				$monthSql = 'extract(YEAR_MONTH from tr.day)';
+				break;
+			case 'postgres':
+				$monthSql = 'to_char(to_date(to_char(tr.day, \'99999999\'), \'YYYYMMDD\'), \'YYYYMM\')';
+				break;
+		}
+
+		// Articles.
+		$params = array(OJS_METRIC_TYPE_TIMED_VIEWS, $loadId, ASSOC_TYPE_ARTICLE);
+		$tempStatsDao->update(
+			'INSERT INTO metrics (load_id, metric_type, assoc_type, assoc_id, day, month, country_id, region, city, submission_id, metric, context_id, issue_id)
+			SELECT tr.load_id, ?, tr.assoc_type, tr.assoc_id, tr.day, ' . $monthSql . ', tr.country_id, tr.region, tr.city, tr.assoc_id, COUNT(tr.metric), a.journal_id, pa.issue_id
+			FROM usage_stats_temporary_records AS tr
+			JOIN articles AS a ON a.article_id = tr.assoc_id
+			JOIN published_articles AS pa ON pa.article_id = tr.assoc_id
+			WHERE tr.load_id = ? AND tr.assoc_type = ?
+			GROUP BY tr.assoc_type, tr.assoc_id, tr.day, tr.country_id, tr.region, tr.city, tr.file_type, tr.load_id, a.journal_id, pa.issue_id', $params
+		);
+
+		// Galleys.
+		$params = array(OJS_METRIC_TYPE_TIMED_VIEWS, $loadId, ASSOC_TYPE_GALLEY);
+		$tempStatsDao->update(
+			'INSERT INTO metrics (load_id, metric_type, assoc_type, assoc_id, day, month, country_id, region, city, submission_id, metric, context_id, issue_id, file_type)
+			SELECT tr.load_id, ?, tr.assoc_type, tr.assoc_id, tr.day, ' . $monthSql . ', tr.country_id, tr.region, tr.city, ag.article_id, COUNT(tr.metric), a.journal_id, pa.issue_id, tr.file_type
+			FROM usage_stats_temporary_records AS tr
+			JOIN article_galleys AS ag ON ag.galley_id = tr.assoc_id
+			JOIN articles AS a ON a.article_id = ag.article_id
+			JOIN published_articles AS pa ON pa.article_id = ag.article_id
+			WHERE tr.load_id = ? AND tr.assoc_type = ?
+			GROUP BY tr.assoc_type, tr.assoc_id, tr.day, tr.country_id, tr.region, tr.city, tr.file_type, tr.load_id, ag.article_id, a.journal_id, pa.issue_id', $params
+		);
+
+		$tempStatsDao->deleteByLoadId($loadId);
+
+		// Remove the plugin settings.
+		$metricsDao->update('delete from plugin_settings where plugin_name = ?', array('timedviewplugin'), false);
+
+		return true;
+	}
+
+	/**
+	 * For 2.4 upgrade: migrate OJS default statistics to the metrics table.
+	 */
+	function migrateDefaultUsageStatistics() {
+		$loadId = '2.4.2-upgrade-ojsViews';
+		$metricsDao =& DAORegistry::getDAO('MetricsDAO');
+		$insertIntoClause = 'INSERT INTO metrics (file_type, load_id, metric_type, assoc_type, assoc_id, submission_id, metric, context_id, issue_id)';
+
+		// Galleys.
+		$galleyUpdateCases = array(
+			array('fileType' => STATISTICS_FILE_TYPE_PDF, 'isHtml' => false, 'assocType' => ASSOC_TYPE_GALLEY),
+			array('fileType' => STATISTICS_FILE_TYPE_HTML, 'isHtml' => true, 'assocType' => ASSOC_TYPE_GALLEY),
+			array('fileType' => STATISTICS_FILE_TYPE_OTHER, 'isHtml' => false, 'assocType' => ASSOC_TYPE_GALLEY)
+		);
+
+		if (Installer::tableExists('issue_galleys_stats_migration')) {
+			$galleyUpdateCases[] = array('fileType' => STATISTICS_FILE_TYPE_PDF, 'assocType' => ASSOC_TYPE_ISSUE_GALLEY);
+			$galleyUpdateCases[] = array('fileType' => STATISTICS_FILE_TYPE_OTHER, 'assocType' => ASSOC_TYPE_ISSUE_GALLEY);
+		}
+
+		foreach ($galleyUpdateCases as $case) {
+			$params = array();
+			if ($case['fileType'] == STATISTICS_FILE_TYPE_PDF) {
+				$pdfFileTypeWhereCheck = 'IN';
+			} else {
+				$pdfFileTypeWhereCheck = 'NOT IN';
+			}
+
+			$params = array($case['fileType'], $loadId, OJS_METRIC_TYPE_LEGACY_DEFAULT, $case['assocType']);
+
+			if ($case['assocType'] == ASSOC_TYPE_GALLEY) {
+				array_push($params, (int) $case['isHtml']);
+				$selectClause = ' SELECT ?, ?, ?, ?, ag.galley_id, ag.article_id, ag.views, a.journal_id, pa.issue_id
+						FROM article_galleys_stats_migration as ag
+						LEFT JOIN articles AS a ON ag.article_id = a.article_id
+						LEFT JOIN published_articles as pa on ag.article_id = pa.article_id
+						LEFT JOIN article_files as af on ag.file_id = af.file_id
+						WHERE a.article_id is not null AND ag.views > 0 AND ag.html_galley = ?
+							AND af.file_type ';
+			} else {
+				$selectClause = ' SELECT ?, ?, ?, ?, ig.galley_id, 0, ig.views, i.journal_id, ig.issue_id
+						FROM issue_galleys_stats_migration AS ig
+						LEFT JOIN issues AS i ON ig.issue_id = i.issue_id
+						LEFT JOIN issue_files AS ifi ON ig.file_id = ifi.file_id
+						WHERE ig.views > 0 AND i.issue_id is not null AND ifi.file_type ';
+			}
+
+			array_push($params, 'application/pdf', 'application/x-pdf', 'text/pdf', 'text/x-pdf');
+
+			$metricsDao->update($insertIntoClause . $selectClause . $pdfFileTypeWhereCheck . ' (?, ?, ?, ?)', $params, false);
+		}
+
+		// Published articles.
+		$params = array(null, $loadId, OJS_METRIC_TYPE_LEGACY_DEFAULT, ASSOC_TYPE_ARTICLE);
+		$metricsDao->update($insertIntoClause .
+				' SELECT ?, ?, ?, ?, pa.article_id, pa.article_id, pa.views, i.journal_id, pa.issue_id
+				FROM published_articles_stats_migration as pa
+				LEFT JOIN issues AS i ON pa.issue_id = i.issue_id
+				WHERE pa.views > 0 AND i.issue_id is not null;', $params, false);
+
+		// Set the site default metric type.
+		$siteSettingsDao =& DAORegistry::getDAO('SiteSettingsDAO'); /* @var $siteSettingsDao SiteSettingsDAO */
+		$siteSettingsDao->updateSetting('defaultMetricType', OJS_METRIC_TYPE_COUNTER);
+
+		return true;
+	}
+
+	/**
+	 * For 2.4.6 upgrade: to enable localization of a CustomBlock,
+	 * the blockContent values are converted from string to array (key: primary_language)
+	 */
+	function localizeCustomBlockSettings() {
+		$pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
+		$journalDao = DAORegistry::getDAO('JournalDAO');
+		$journals = $journalDao->getJournals();
+
+		while ($journal = $journals->next()) {
+			$journalId = $journal->getId();
+			$primaryLocale = $journal->getPrimaryLocale();
+
+			$blocks = $pluginSettingsDao->getSetting($journalId, 'customblockmanagerplugin', 'blocks');
+			if ($blocks) foreach ($blocks as $block) {
+				$blockContent = $pluginSettingsDao->getSetting($journalId, $block, 'blockContent');
+
+				if (!is_array($blockContent)) {
+					$pluginSettingsDao->updateSetting($journalId, $block, 'blockContent', array($primaryLocale => $blockContent));
+				}
+			}
+			unset($journal);
+		}
+
+		return true;
+	}
+
+	/**
+	 * For 2.4.6 upgrade: Remove the "Custom Identifier" suffix option in the DOI and URN plugin and
+	 * use the ctustom suffix pattern %x instead.
+	 * @return boolean
+	 */
+	function removeCustomIdentifierSuffixOption() {
+		$pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
+		$journalDao = DAORegistry::getDAO('JournalDAO');
+		$journals = $journalDao->getJournals();
+		while ($journal = $journals->next()) {
+			$journalId = $journal->getId();
+			// DOI plugin
+			$doiSuffixSetting = $pluginSettingsDao->getSetting($journalId, 'doipubidplugin', 'doiSuffix');
+			if ($doiSuffixSetting == 'publisherId') {
+				if ($pluginSettingsDao->getSetting($journalId, 'doipubidplugin', 'enableArticleDoi')) {
+					$pluginSettingsDao->updateSetting($journalId, 'doipubidplugin', 'doiArticleSuffixPattern', '%x', 'string');
+				}
+				if ($pluginSettingsDao->getSetting($journalId, 'doipubidplugin', 'enableGalleyDoi')) {
+					$pluginSettingsDao->updateSetting($journalId, 'doipubidplugin', 'doiGalleySuffixPattern', '%x', 'string');
+				}
+				if ($pluginSettingsDao->getSetting($journalId, 'doipubidplugin', 'enableIssueDoi')) {
+					$pluginSettingsDao->updateSetting($journalId, 'doipubidplugin', 'doiIssueSuffixPattern', '%x', 'string');
+				}
+				if ($pluginSettingsDao->getSetting($journalId, 'doipubidplugin', 'enableSuppFileDoi')) {
+					$pluginSettingsDao->updateSetting($journalId, 'doipubidplugin', 'doiSuppFileSuffixPattern', '%x', 'string');
+				}
+				$pluginSettingsDao->updateSetting($journalId, 'doipubidplugin', 'doiSuffix', 'pattern', 'string');
+			}
+			// URN plugin
+			$urnSuffixSetting = $pluginSettingsDao->getSetting($journalId, 'urnpubidplugin', 'urnSuffix');
+			if ($doiSuffixSetting == 'publisherId') {
+				if ($pluginSettingsDao->getSetting($journalId, 'urnpubidplugin', 'enableArticleURN')) {
+					$pluginSettingsDao->updateSetting($journalId, 'urnpubidplugin', 'urnArticleSuffixPattern', '%x', 'string');
+				}
+				if ($pluginSettingsDao->getSetting($journalId, 'urnpubidplugin', 'enableGalleyURN')) {
+					$pluginSettingsDao->updateSetting($journalId, 'urnpubidplugin', 'urnGalleySuffixPattern', '%x', 'string');
+				}
+				if ($pluginSettingsDao->getSetting($journalId, 'urnpubidplugin', 'enableIssueURN')) {
+					$pluginSettingsDao->updateSetting($journalId, 'urnpubidplugin', 'urnIssueSuffixPattern', '%x', 'string');
+				}
+				if ($pluginSettingsDao->getSetting($journalId, 'urnpubidplugin', 'enableSuppFileURN')) {
+					$pluginSettingsDao->updateSetting($journalId, 'urnpubidplugin', 'urnSuppFileSuffixPattern', '%x', 'string');
+				}
+				$pluginSettingsDao->updateSetting($journalId, 'urnpubidplugin', 'urnSuffix', 'pattern', 'string');
+			}
+			unset($journal);
+		}
+		return true;
+	}
+	
+	/**
+	 * For 2.4.6 upgrade: delete completed payments related to non existing users.
+	 * @return boolean
+	 */
+	function deleteOrphanedCompletedPayments() {
+		$paymentDao =& DAORegistry::getDAO('OJSCompletedPaymentDAO');
+		$result =& $paymentDao->retrieve('SELECT DISTINCT cp.user_id FROM completed_payments AS cp LEFT JOIN users AS u ON cp.user_id = u.user_id WHERE u.user_id IS NULL');
+
+		while(!$result->EOF) {
+			$row =& $result->GetRowAssoc(false);
+			$result->MoveNext();
+
+			$paymentDao->update('DELETE from completed_payments WHERE user_id = ?', array($row['user_id']), false);
+		}
 
 		return true;
 	}

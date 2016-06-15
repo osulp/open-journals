@@ -1,12 +1,12 @@
 {**
- * login.tpl
+ * templates/user/login.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * User login form.
  *
- * $Id$
  *}
 {strip}
 {assign var="pageTitle" value="user.login"}
@@ -26,21 +26,28 @@
 	<br />
 {/if}
 
-{if $error}
-	<span class="formError">{translate key="$error" reason=$reason}</span>
-	<br />
-	<br />
+{if $implicitAuth === $smarty.const.IMPLICIT_AUTH_OPTIONAL}
+	<h3>{translate key="user.login.implicitAuth"}</h3>
 {/if}
-
 {if $implicitAuth}
-	<a id="implicitAuthLogin" href="{url page="login" op="implicitAuthLogin"}">Login</a>
-{else}
-	<form id="signinForm" name="login" method="post" action="{$loginUrl}">
+	<a id="implicitAuthLogin" href="{url page="login" op="implicitAuthLogin"}">{translate key="user.login.implicitAuthLogin"}</a>
+{/if}
+{if $implicitAuth === $smarty.const.IMPLICIT_AUTH_OPTIONAL}
+	<h3>{translate key="user.login.localAuth"}</h3>
+{/if}
+{if !$implicitAuth || $implicitAuth === $smarty.const.IMPLICIT_AUTH_OPTIONAL}
+	<form id="signinForm" method="post" action="{$loginUrl}">
 {/if}
 
-<input type="hidden" name="source" value="{$source|escape}" />
+{if $error}
+	<span class="pkp_form_error">{translate key="$error" reason=$reason}</span>
+	<br />
+	<br />
+{/if}
 
-{if ! $implicitAuth}
+<input type="hidden" name="source" value="{$source|strip_unsafe_html|escape}" />
+
+{if !$implicitAuth || $implicitAuth === $smarty.const.IMPLICIT_AUTH_OPTIONAL}
 	<table id="signinTable" class="data">
 	<tr>
 		<td class="label"><label for="loginUsername">{translate key="user.username"}</label></td>
@@ -48,7 +55,7 @@
 	</tr>
 	<tr>
 		<td class="label"><label for="loginPassword">{translate key="user.password"}</label></td>
-		<td class="value"><input type="password" id="loginPassword" name="password" value="{$password|escape}" size="20" maxlength="32" class="textField" /></td>
+		<td class="value"><input type="password" id="loginPassword" name="password" value="{$password|escape}" size="20" class="textField" /></td>
 	</tr>
 	{if $showRemember}
 	<tr valign="middle">
@@ -63,18 +70,17 @@
 	</tr>
 	</table>
 
-	<p>
-		{if !$hideRegisterLink}&#187; <a href="{url page="user" op=$registerOp}">{translate key=$registerLocaleKey}</a><br />{/if}
-		&#187; <a href="{url page="login" op="lostPassword"}">{translate key="user.login.forgotPassword"}</a>
-	</p>
-{/if}{* !$implicitAuth *}
+	<ul>
+		{if !$hideRegisterLink}<li><a href="{url page="user" op=$registerOp}">{translate key=$registerLocaleKey}</a></li>{/if}
+		<li><a href="{url page="login" op="lostPassword"}">{translate key="user.login.forgotPassword"}</a></li>
+	</ul>
 
 <script type="text/javascript">
 <!--
-	document.login.{if $username}loginPassword{else}loginUsername{/if}.focus();
+	document.getElementById('{if $username}loginPassword{else}loginUsername{/if}').focus();
 // -->
 </script>
 </form>
+{/if}{* !$implicitAuth || $implicitAuth === $smarty.const.IMPLICIT_AUTH_OPTIONAL *}
 
 {include file="common/footer.tpl"}
-

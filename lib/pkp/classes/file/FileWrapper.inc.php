@@ -7,7 +7,8 @@
 /**
  * @file classes/file/FileWrapper.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FileWrapper
@@ -20,8 +21,6 @@
  *     - Other protocols?
  *     - Write mode (where possible)
  */
-
-// $Id$
 
 
 class FileWrapper {
@@ -105,31 +104,51 @@ class FileWrapper {
 
 	/**
 	 * Return instance of a class for reading the specified URL.
-	 * @param $url string
+	 * @param $source mixed; URL, filename, or resources
 	 * @return FileWrapper
 	 */
-	function &wrapper($url) {
-		$info = parse_url($url);
-		if (ini_get('allow_url_fopen') && Config::getVar('general', 'allow_url_fopen')) {
-			$wrapper = new FileWrapper($url, $info);
+	function &wrapper($source) {
+		if (ini_get('allow_url_fopen') && Config::getVar('general', 'allow_url_fopen') && is_string($source)) {
+			$info = parse_url($source);
+			$wrapper = new FileWrapper($source, $info);
+		} elseif (is_resource($source)) {
+			// $source is an already-opened file descriptor.
+			import('lib.pkp.classes.file.wrappers.ResourceWrapper');
+			$wrapper = new ResourceWrapper($source);
 		} else {
-			switch (@$info['scheme']) {
+			// $source should be a URL.
+			$info = parse_url($source);
+			if (isset($info['scheme'])) {
+				$scheme = $info['scheme'];
+			} else {
+				$scheme = null;
+			}
+
+			$application =& Application::getApplication();
+			if (!Config::getVar('general', 'installed') || defined('RUNNING_UPGRADE') || defined('PHPUNIT_CURRENT_MOCK_ENV')) {
+				$userAgent = $application->getName() . '/?';
+			} else {
+				$currentVersion =& $application->getCurrentVersion();
+				$userAgent = $application->getName() . '/' . $currentVersion->getVersionString();
+			}
+
+			switch ($scheme) {
 				case 'http':
 					import('lib.pkp.classes.file.wrappers.HTTPFileWrapper');
-					$wrapper = new HTTPFileWrapper($url, $info);
-					$wrapper->addHeader('User-Agent', 'PKP-OJS/2.x');
+					$wrapper = new HTTPFileWrapper($source, $info);
+					$wrapper->addHeader('User-Agent', $userAgent);
 					break;
 				case 'https':
 					import('lib.pkp.classes.file.wrappers.HTTPSFileWrapper');
-					$wrapper = new HTTPSFileWrapper($url, $info);
-					$wrapper->addHeader('User-Agent', 'PKP-OJS/2.x');
+					$wrapper = new HTTPSFileWrapper($source, $info);
+					$wrapper->addHeader('User-Agent', $userAgent);
 					break;
 				case 'ftp':
 					import('lib.pkp.classes.file.wrappers.FTPFileWrapper');
-					$wrapper = new FTPFileWrapper($url, $info);
+					$wrapper = new FTPFileWrapper($source, $info);
 					break;
 				default:
-					$wrapper = new FileWrapper($url, $info);
+					$wrapper = new FileWrapper($source, $info);
 			}
 		}
 

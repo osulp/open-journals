@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000015.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
-  * Distribuido por GNU GPL v2. Para términos completos ve el archivo docs/COPYING.
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Roles - Administrador de Suscripciones  
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Roles - Subscription Manager 
   *
-  * $Id$
   -->
 
-<topic id="journal/topic/000032" locale="es_ES" title="Administrador de Suscripciones" toc="journal/toc/000003" key="journal.roles.subscriptionManager">
+<topic id="journal/topic/000032" locale="es_ES" title="Gestor/a de suscripciones" toc="journal/toc/000003" key="journal.roles.subscriptionManager">
 	<section>
-		<![CDATA[<p>El administrador de Suscripciones administra las suscripciones de la revista y los tipos de suscripciones.</p><p>Puede encontrar más información sobre la administración de las suscripciones en  {help_topic key="journal.managementPages.subscriptions" text="here"}.</p>]]>
+		<![CDATA[<p>El gestor/a de suscripciones gestiona los diferentes tipos de suscripción de la revista.</p><p>Se puede encontrar más información sobre la gestión de suscripciones en {help_topic key="journal.managementPages.subscriptions" text="aquí"}.</p>]]>
 	</section>
-</topic>
+</topic> 

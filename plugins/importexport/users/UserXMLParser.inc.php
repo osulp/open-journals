@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file UserXMLParser.inc.php
+ * @file plugins/importexport/users/UserXMLParser.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class UserXMLParser
@@ -12,9 +13,6 @@
  * @brief Class to import and export user data from an XML format.
  * See dbscripts/xml/dtd/users.dtd for the XML schema used.
  */
-
-// $Id$
-
 
 import('lib.pkp.classes.xml.XMLParser');
 
@@ -57,7 +55,7 @@ class UserXMLParser {
 		$tree = $this->parser->parse($file);
 
 		$journalDao =& DAORegistry::getDAO('JournalDAO');
-		$journal =& $journalDao->getJournal($this->journalId);
+		$journal =& $journalDao->getById($this->journalId);
 		$journalPrimaryLocale = AppLocale::getPrimaryLocale();
 
 		$site =& Request::getSite();
@@ -73,7 +71,7 @@ class UserXMLParser {
 						switch ($attrib->getName()) {
 							case 'username':
 								// Usernames must be lowercase
-								$newUser->setUsername(strtolower($attrib->getValue()));
+								$newUser->setUsername(strtolower_codesafe($attrib->getValue()));
 								break;
 							case 'password':
 								$newUser->setMustChangePassword($attrib->getAttribute('change') == 'true'?1:0);
@@ -135,7 +133,10 @@ class UserXMLParser {
 								$newUser->setSignature($attrib->getValue(), $locale);
 								break;
 							case 'interests':
-								$newUser->setTemporaryInterests($attrib->getValue());
+								$interests = $attrib->getValue(); // Bug #9054
+								$oldInterests = $newUser->getTemporaryInterests();
+								if ($oldInterests) $interests = $oldInterests . ',' . $interests;
+								$newUser->setTemporaryInterests($interests);
 								break;
 							case 'gossip':
 								$locale = $attrib->getAttribute('locale');
@@ -194,8 +195,8 @@ class UserXMLParser {
 			$mail = new MailTemplate('USER_REGISTER');
 
 			$journalDao =& DAORegistry::getDAO('JournalDAO');
-			$journal =& $journalDao->getJournal($this->journalId);
-			$mail->setFrom($journal->getSetting('contactEmail'), $journal->getSetting('contactName'));
+			$journal =& $journalDao->getById($this->journalId);
+			$mail->setReplyTo($journal->getSetting('contactEmail'), $journal->getSetting('contactName'));
 		}
 
 		for ($i=0, $count=count($this->usersToImport); $i < $count; $i++) {
@@ -222,7 +223,7 @@ class UserXMLParser {
 
 			if (!$newUsername) {
 				// Check if user already exists
-				$userExists = $userDao->getUserByUsername($user->getUsername(), true);
+				$userExists = $userDao->getByUsername($user->getUsername(), true);
 				if ($userExists != null) {
 					$user->setId($userExists->getId());
 				}
@@ -251,19 +252,20 @@ class UserXMLParser {
 			}
 
 			// Add reviewing interests to interests table
+			$interestDao =& DAORegistry::getDAO('InterestDAO');
 			$interests = $user->getTemporaryInterests();
 			$interests = explode(',', $interests);
 			$interests = array_map('trim', $interests); // Trim leading whitespace
-			import('lib.pkp.classes.user.InterestManager');
-			$interestManager = new InterestManager();
-			$interestManager->setInterestsForUser($user, $interests);
+			if(is_array($interests) && !empty($interests)) {
+				$interestDao->setUserInterests($interests, $user->getId());
+			}
 
 			// Enroll user in specified roles
 			// If the user is already enrolled in a role, that role is skipped
 			foreach ($user->getRoles() as $role) {
 				$role->setUserId($user->getId());
 				$role->setJournalId($this->journalId);
-				if (!$roleDao->roleExists($role->getJournalId(), $role->getUserId(), $role->getRoleId())) {
+				if (!$roleDao->userHasRole($role->getJournalId(), $role->getUserId(), $role->getRoleId())) {
 					if (!$roleDao->insertRole($role)) {
 						// Failed to add role!
 						$this->errors[] = sprintf('%s: %s - %s (%s)',
@@ -352,7 +354,7 @@ class UserXMLParser {
 		if (empty($baseUsername)) {
 			$baseUsername = String::regexp_replace('/[^A-Z0-9]/i', '', $user->getFirstName());
 		}
-		if (empty($username)) {
+		if (empty($baseUsername)) {
 			// Default username if we can't use the user's last or first name
 			$baseUsername = 'user';
 		}

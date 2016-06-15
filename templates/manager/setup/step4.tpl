@@ -1,17 +1,17 @@
 {**
- * step4.tpl
+ * templates/manager/setup/step4.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Step 4 of journal setup.
  *
- * $Id$
  *}
 {assign var="pageTitle" value="manager.setup.managingTheJournal"}
 {include file="manager/setup/setupHeader.tpl"}
 
-<form name="setupForm" method="post" action="{url op="saveSetup" path="4"}" enctype="multipart/form-data">
+<form id="setupForm" method="post" action="{url op="saveSetup" path="4"}" enctype="multipart/form-data">
 {include file="common/formErrors.tpl"}
 
 {if count($formLocales) > 1}
@@ -62,7 +62,7 @@
 		</td>
 		<td width="95%" class="value">
 			<label for="publishingMode-0">{translate key="manager.setup.openAccess"}</label>
-			<h4>{translate key="manager.setup.openAccessPolicy"}</h4>
+			<h4>{fieldLabel name="openAccessPolicy" key="manager.setup.openAccessPolicy"}</h4>
 			<p><span class="instruct">{translate key="manager.setup.openAccessPolicyDescription"}</span></p>
 			<p><textarea name="openAccessPolicy[{$formLocale|escape}]" id="openAccessPolicy" rows="12" cols="60" class="textArea"{if $publishingMode != $smarty.const.PUBLISHING_MODE_OPEN} disabled="disabled"{/if}>{$openAccessPolicy[$formLocale]|escape}</textarea></p>
 		</td>
@@ -81,7 +81,7 @@
 				<tr>
 					<td width="5%"><input type="checkbox" name="showGalleyLinks" id="showGalleyLinks" {if $showGalleyLinks} checked="checked"{/if} /></td>
 					<td width="95%"><label for="showGalleyLinks">{translate key="manager.setup.showGalleyLinksDescription"}</label></td>
-				</tr>	
+				</tr>
 			</table>
 		</td>
 	</tr>
@@ -165,20 +165,6 @@ function setRegAllowOpts(form) {
 </table>
 </div><!-- userRegistration -->
 
-<div id="loggingAndAuditing">
-<h4>{translate key="manager.setup.loggingAndAuditing"}</h4>
-
-<table width="100%" class="data">
-	<tr valign="top">
-		<td width="5%" class="label"><input type="checkbox" name="articleEventLog" id="articleEventLog" value="1"{if $articleEventLog} checked="checked"{/if} /></td>
-		<td width="95%" class="value"><label for="articleEventLog">{translate key="manager.setup.submissionEventLogging"}</label></td>
-	</tr>
-	<tr valign="top">
-		<td width="5%" class="label"><input type="checkbox" name="articleEmailLog" id="articleEmailLog" value="1"{if $articleEmailLog} checked="checked"{/if} /></td>
-		<td width="95%" class="value"><label for="articleEmailLog">{translate key="manager.setup.submissionEmailLogging"}</label></td>
-	</tr>
-</table>
-</div><!-- loggingAndAuditing -->
 </div><!-- securitySettings -->
 
 <div class="separator"></div>
@@ -186,7 +172,7 @@ function setRegAllowOpts(form) {
 <div id="publicationScheduling">
 <h3>4.2 {translate key="manager.setup.publicationScheduling"}</h3>
 <div id="publicationSchedule">
-<h4>{translate key="manager.setup.publicationSchedule"}</h4>
+<h4>{fieldLabel name="pubFreqPolicy" key="manager.setup.publicationSchedule"}</h4>
 
 <p>{translate key="manager.setup.publicationScheduleDescription"}</p>
 
@@ -315,15 +301,15 @@ function setRegAllowOpts(form) {
 <p>
 	<input type="checkbox" name="enableAnnouncementsHomepage" id="enableAnnouncementsHomepage" value="1" onclick="toggleEnableAnnouncementsHomepage(this.form)"{if $enableAnnouncementsHomepage} checked="checked"{/if} />&nbsp;
 	<label for="enableAnnouncementsHomepage">{translate key="manager.setup.enableAnnouncementsHomepage1"}</label>
-	<select name="numAnnouncementsHomepage" size="1" class="selectMenu" {if not $enableAnnouncementsHomepage}disabled="disabled"{/if}>
+	<select name="numAnnouncementsHomepage" id="numAnnouncementsHomepage" size="1" class="selectMenu" {if not $enableAnnouncementsHomepage}disabled="disabled"{/if}>
 		{section name="numAnnouncementsHomepageOptions" start=1 loop=11}
 		<option value="{$smarty.section.numAnnouncementsHomepageOptions.index}"{if $numAnnouncementsHomepage eq $smarty.section.numAnnouncementsHomepageOptions.index or ($smarty.section.numAnnouncementsHomepageOptions.index eq 1 and not $numAnnouncementsHomepage)} selected="selected"{/if}>{$smarty.section.numAnnouncementsHomepageOptions.index}</option>
 		{/section}
 	</select>
-	{translate key="manager.setup.enableAnnouncementsHomepage2"}
+	{fieldLabel name="numAnnouncementsHomepage" key="manager.setup.enableAnnouncementsHomepage2"}
 </p>
 <div id="announcementsIntroductionSection">
-<h4>{translate key="manager.setup.announcementsIntroduction"}</h4>
+<h4>{fieldLabel name="announcementsIntroduction" key="manager.setup.announcementsIntroduction"}</h4>
 
 <p>{translate key="manager.setup.announcementsIntroductionDescription"}</p>
 
@@ -351,7 +337,7 @@ function setRegAllowOpts(form) {
 </div><!-- copyediting -->
 
 <div id="copyeditInstructionsSection">
-<h4>{translate key="manager.setup.copyeditInstructions"}</h4>
+<h4>{fieldLabel name="copyeditInstructions" key="manager.setup.copyeditInstructions"}</h4>
 
 <p>{translate key="manager.setup.copyeditInstructionsDescription"}</p>
 
@@ -379,7 +365,7 @@ function setRegAllowOpts(form) {
 </table>
 
 <div id="layoutInstructionsSection">
-<h4>{translate key="manager.setup.layoutInstructions"}</h4>
+<h4>{fieldLabel name="layoutInstructions" key="manager.setup.layoutInstructions"}</h4>
 
 <p>{translate key="manager.setup.layoutInstructionsDescription"}</p>
 
@@ -425,7 +411,7 @@ function setRegAllowOpts(form) {
 </div><!-- referenceLinking -->
 
 <div id="refLinkInstructionsSection">
-<h4>{translate key="manager.setup.refLinkInstructions.description"}</h4>
+<h4>{fieldLabel name="refLinkInstructions" key="manager.setup.refLinkInstructions.description"}</h4>
 <textarea name="refLinkInstructions[{$formLocale|escape}]" id="refLinkInstructions" rows="12" cols="60" class="textArea">{$refLinkInstructions[$formLocale]|escape}</textarea>
 </div><!-- refLinkInstructionsSection -->
 </div>
@@ -447,7 +433,7 @@ function setRegAllowOpts(form) {
 	</tr>
 </table>
 <div id="proofingInstructions">
-<h4>{translate key="manager.setup.proofingInstructions"}</h4>
+<h4>{fieldLabel name="proofInstructions" key="manager.setup.proofingInstructions"}</h4>
 
 <p>{translate key="manager.setup.proofingInstructionsDescription"}</p>
 

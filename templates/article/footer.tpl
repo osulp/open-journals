@@ -1,7 +1,8 @@
 {**
- * footer.tpl
+ * templates/article/footer.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Article View -- Footer component.
@@ -23,7 +24,7 @@
 				onmouseout="addthis_close()" onclick="return addthis_sendto()">
 					<img src="{$sharingButtonUrl}" width="{$sharingButtonWidth}" height="{$sharingButtonHeight}" border="0" alt="Bookmark and Share" style="border:0;padding:0" />
 			</a>
-			<script type="text/javascript" src="http://s7.addthis.com/js/200/addthis_widget.js"></script>
+			<script type="text/javascript" src="//s7.addthis.com/js/200/addthis_widget.js"></script>
 		</div>
 	{else}
 		<a href="http://www.addthis.com/bookmark.php"
@@ -37,8 +38,19 @@
 <!-- end AddThis -->
 {/if}
 
-{if $currentJournal && $currentJournal->getSetting('includeCreativeCommons')}
-{translate key="common.ccLicense"}
+{if $currentJournal}
+	{if $currentJournal->getSetting('includeCopyrightStatement')}
+		<br/><br/>
+		{translate key="submission.copyrightStatement" copyrightYear=$article->getCopyrightYear()|escape copyrightHolder=$article->getLocalizedCopyrightHolder()|escape}
+	{/if}
+	{if $currentJournal->getSetting('includeLicense')}
+		<br /><br />
+		{if $ccLicenseBadge}
+			{$ccLicenseBadge}
+		{elseif $article->getLicenseURL()}
+			{translate key="submission.licenseURL"}: <a href="{$article->getLicenseURL()|escape}" rel="license">{$article->getLicenseURL()|escape}</a>
+		{/if}
+	{/if}
 {/if}
 
 {call_hook name="Templates::Article::Footer::PageFooter"}
@@ -65,14 +77,28 @@
 			var range = document.selection.createRange();
 			term = range.text;
 		}
-		if (url.indexOf('?') > -1) openRTWindowWithToolbar(url + '&defineTerm=' + term);
-		else openRTWindowWithToolbar(url + '?defineTerm=' + term);
+		if (term != ""){
+			if (url.indexOf('?') > -1) openRTWindowWithToolbar(url + '&defineTerm=' + term);
+			else openRTWindowWithToolbar(url + '?defineTerm=' + term);
+		}
 	}
 
 	if(document.captureEvents) {
 		document.captureEvents(Event.DBLCLICK);
 	}
-	document.ondblclick = new Function("openSearchTermWindow('{/literal}{url page="rt" op="context" path=$articleId|to_array:$galleyId:$defineTermsContextId escape=false}{literal}')");
+
+	// Make sure to only open the reading tools when double clicking within the galley
+	if (document.getElementById('inlinePdfResizer')) {
+		context = document.getElementById('inlinePdfResizer');
+	}
+	else if (document.getElementById('content')) {
+		context = document.getElementById('content');
+	}
+	else {
+		context = document;
+	}
+
+	context.ondblclick = new Function("openSearchTermWindow('{/literal}{url page="rt" op="context" path=$articleId|to_array:$galleyId:$defineTermsContextId escape=false}{literal}')");
 // -->
 {/literal}
 </script>
@@ -83,4 +109,3 @@
 </div> <!-- container -->
 </body>
 </html>
-

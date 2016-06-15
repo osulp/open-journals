@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000007.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
-  * Distribuido por GNU GPL v2. para términos completos vea el archivo docs/COPYING.
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Administración de páginas - Idiomas 
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Management Pages - Languages 
   *
-  * $Id$
   -->
 
 <topic id="journal/topic/000007" locale="es_ES" title="Idiomas" toc="journal/toc/000001" key="journal.managementPages.languages">
 	<section>
-		<![CDATA[<p>Este sistema puede soportar revistas multilingües, así como también revistas en un idoma diferente al Inglés. Aquellos idiomas que el administrador del sitio ha puesto disponibles están listados bajo Idiomas en la administarción de la revista, y pueden ser seleccionados para ser usados en la página de la revista. Si se selecciona más de un idioma bajo escenarios soportados, los visitantes del sitio podrán pasar de un idioma a otro a trvés del menú desplegable en la barra de navegación. Adicionalmente, los usuarios podrán ingresar formularios de información en cualquier idioma habilitado.</p>]]>	
+		<![CDATA[<p>Este sistema es compatible con revistas multilingües, así como revistas en otros idiomas además del castellano. Los idiomas que el administrador/a del sitio habilite para el sistema aparecen en el listado de Idiomas en Gestión de la revista, y pueden utilizarse para navegar por el sitio web de la revista. Si se selecciona más de un idioma en las configuraciones regionales admitidas, los visitantes podrán alternar entre distintos idiomas desde el menú desplegable de la barra de navegación. Además, los usuarios/as podrán introducir información en formularios en cualquier idioma habilitado.</p>]]>	
 	</section>
-</topic>
+</topic> 

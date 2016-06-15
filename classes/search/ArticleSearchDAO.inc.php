@@ -3,7 +3,8 @@
 /**
  * @file classes/search/ArticleSearchDAO.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ArticleSearchDAO
@@ -13,9 +14,6 @@
  * @brief DAO class for article search index.
  */
 
-// $Id$
-
-
 import('classes.search.ArticleSearch');
 
 class ArticleSearchDAO extends DAO {
@@ -24,7 +22,7 @@ class ArticleSearchDAO extends DAO {
 	 * @param $keyword string
 	 * @return int the keyword ID
 	 */
-	function insertKeyword($keyword) {
+	function _insertKeyword($keyword) {
 		static $articleSearchKeywordIds = array();
 		if (isset($articleSearchKeywordIds[$keyword])) return $articleSearchKeywordIds[$keyword];
 		$result =& $this->retrieve(
@@ -103,15 +101,16 @@ class ArticleSearchDAO extends DAO {
 			$params[] = $journal->getId();
 		}
 
+		import('classes.article.Article'); // STATUS_PUBLISHED
 		$result =& $this->retrieveCached(
-			'SELECT
-				o.article_id,
+			'SELECT	o.article_id,
 				COUNT(*) AS count
-			FROM
+			FROM	articles a,
 				published_articles pa,
 				issues i,
 				article_search_objects o NATURAL JOIN ' . $sqlFrom . '
-			WHERE
+			WHERE	pa.article_id = a.article_id AND
+				a.status = ' . STATUS_PUBLISHED . ' AND
 				pa.article_id = o.article_id AND
 				i.issue_id = pa.issue_id AND
 				i.published = 1 AND ' . $sqlWhere . '
@@ -197,13 +196,25 @@ class ArticleSearchDAO extends DAO {
 	 * @return $keywordId
 	 */
 	function insertObjectKeyword($objectId, $keyword, $position) {
-		$keywordId = $this->insertKeyword($keyword);
+		$keywordId = $this->_insertKeyword($keyword);
 		if ($keywordId === null) return null; // Bug #2324
 		$this->update(
 			'INSERT INTO article_search_object_keywords (object_id, keyword_id, pos) VALUES (?, ?, ?)',
 			array($objectId, $keywordId, $position)
 		);
 		return $keywordId;
+	}
+
+	/**
+	 * Clear the search index.
+	 */
+	function clearIndex() {
+		$this->update('DELETE FROM article_search_object_keywords');
+		$this->update('DELETE FROM article_search_objects');
+		$this->update('DELETE FROM article_search_keyword_list');
+		$this->setCacheDir(Config::getVar('files', 'files_dir') . '/_db');
+		$dataSource = $this->getDataSource();
+		$dataSource->CacheFlush();
 	}
 }
 

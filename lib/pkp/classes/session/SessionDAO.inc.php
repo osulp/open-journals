@@ -3,7 +3,8 @@
 /**
  * @file classes/session/SessionDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class SessionDAO
@@ -13,12 +14,24 @@
  * @brief Operations for retrieving and modifying Session objects.
  */
 
-// $Id$
-
 
 import('lib.pkp.classes.session.Session');
 
 class SessionDAO extends DAO {
+	/**
+	 * Constructor
+	 */
+	function SessionDAO() {
+		parent::DAO();
+	}
+
+	/**
+	 * Instantiate and return a new data object.
+	 */
+	function newDataObject() {
+		return new Session();
+	}
+
 	/**
 	 * Retrieve a session by ID.
 	 * @param $sessionId string
@@ -34,7 +47,7 @@ class SessionDAO extends DAO {
 		if ($result->RecordCount() != 0) {
 			$row =& $result->GetRowAssoc(false);
 
-			$session = new Session();
+			$session = $this->newDataObject();
 			$session->setId($row['session_id']);
 			$session->setUserId($row['user_id']);
 			$session->setIpAddress($row['ip_address']);
@@ -43,7 +56,7 @@ class SessionDAO extends DAO {
 			$session->setSecondsLastUsed($row['last_used']);
 			$session->setRemember($row['remember']);
 			$session->setSessionData($row['data']);
-			$session->setActingAsUserGroupId((int)$row['acting_as']);
+			$session->setDomain($row['domain']);
 		}
 
 		$result->Close();
@@ -59,7 +72,7 @@ class SessionDAO extends DAO {
 	function insertSession(&$session) {
 		return $this->update(
 			'INSERT INTO sessions
-				(session_id, ip_address, user_agent, created, last_used, remember, data, acting_as)
+				(session_id, ip_address, user_agent, created, last_used, remember, data, domain)
 				VALUES
 				(?, ?, ?, ?, ?, ?, ?, ?)',
 			array(
@@ -70,7 +83,7 @@ class SessionDAO extends DAO {
 				(int) $session->getSecondsLastUsed(),
 				$session->getRemember() ? 1 : 0,
 				$session->getSessionData(),
-				(int)$session->getActingAsUserGroupId()
+				$session->getDomain()
 			)
 		);
 	}
@@ -90,7 +103,7 @@ class SessionDAO extends DAO {
 					last_used = ?,
 					remember = ?,
 					data = ?,
-					acting_as = ?
+					domain = ?
 				WHERE session_id = ?',
 			array(
 				$session->getUserId()==''?null:(int) $session->getUserId(),
@@ -100,7 +113,7 @@ class SessionDAO extends DAO {
 				(int) $session->getSecondsLastUsed(),
 				$session->getRemember() ? 1 : 0,
 				$session->getSessionData(),
-				(int)$session->getActingAsUserGroupId(),
+				$session->getDomain(),
 				$session->getId()
 			)
 		);

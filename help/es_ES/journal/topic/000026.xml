@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000026.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
-  * Distribuido por GNU GPL v2. Para términos completos vea el archivo docs/COPYING.
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Páginas Administrativas - Herramientas de Lectura - Propiedades
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Management Pages - Reading Tools - Settings
   *
-  * $Id$
   -->
 
-<topic id="journal/topic/000026" locale="es_ES" title="Opciones de Herramentas de Lectura" toc="journal/toc/000005" key="journal.managementPages.readingTools.settings">
+<topic id="journal/topic/000026" locale="es_ES" title="Opciones de las herramientas de lectura" toc="journal/toc/000005" key="journal.managementPages.readingTools.settings">
 	<section>
-		<![CDATA[<p>El administardor de la revista puede seleccionar uno o todos los enlaces genéricos opcionales como parte de un conjunto de Herramientas que aparecerán en un cuadro a la derecha de todos los artículos en la sección de la revista que estén indexados  as part of the set of tools, (ej., Artículos y no anuncios de conferencia). El administrador de la revista también puede seleccionar una disciplina o un área basada en el conjunto de Herramientas de Lectura, mostradas como artículos relacionados a ser visualizados. El administrador de la revista puede examinar, editar, eliminar o agregar a las herramientas en cada uno de los conjuntos de artículos relacionados al ir a los conjuntos de artículos relacionados, en Herrameintas de Lectura.</p><p> El mismo conjunto de herramientas de lectura aparece con cada artículo en las secciones indexadas de la revista. Sin Embargo, las herramientas de lectura usan los términos de indexación provistos por el autor, para asegurar que los materiales encontrados en la base de datos sean relevantes. El administrador de la revista puede cambiar las herramientas de lectura seleccionadas en cualquier momento.</p>]]>
+		<![CDATA[<p>El gestor/a de la revista puede seleccionar uno o todos los enlaces opcionales genéricos para que aparezcan como parte del conjunto de herramientas en un marco a la derecha de los elementos indexados en las secciones de la revista (p. ej., Artículos y no Avisos de conferencias). El gestor/a de la revista también puede seleccionar un conjunto de herramientas de lectura para una disciplina o un conjunto de áreas que se mostrará como elementos relacionados. El gestor/a de la revista puede examinar, editar, eliminar o añadir las herramientas en cada conjunto de elementos relacionados mediante Conjuntos de elementos relacionados, debajo de Herramientas de lectura.</p><p>El mismo conjunto de herramientas de lectura aparece con cada elemento en las secciones indexadas de la revista. Sin embargo, las herramientas de lectura utilizan los términos de indexación proporcionados por el autor/a para asegurar que el material que se encuentra en las bases de datos de las que se dispone es relevante. El gestor/a de la revista puede cambiar las herramientas de lectura seleccionadas en cualquier momento.</p>]]>
 	</section>
-</topic>
+</topic> 

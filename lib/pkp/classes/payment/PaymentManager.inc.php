@@ -3,7 +3,8 @@
 /**
  * @file classes/payment/PaymentManager.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PaymentManager
@@ -15,27 +16,22 @@
  */
 
 class PaymentManager {
+	/** @var $request PKPRequest */
+	var $request;
+
 	/**
 	 * Constructor
 	 * @param $request PKPRequest
 	 */
-	function PaymentManager($request) {
+	function PaymentManager(&$request) {
 		$this->request =& $request;
-	}
-
-	/**
-	 * Get the payment manager.
-	 */
-	function &getManager() {
-		// must be implemented by sub-classes
-		assert(false);
 	}
 
 	/**
 	 * Queue a payment for receipt.
 	 * @param $queuedPayment object
 	 * @param $expiryDate date optional
-	 * @return int Queued payment ID for new payment
+	 * @return mixed Queued payment ID for new payment, or false if fails
 	 */
 	function queuePayment(&$queuedPayment, $expiryDate = null) {
 		if (!$this->isConfigured()) return false;
@@ -51,11 +47,11 @@ class PaymentManager {
 
 	/**
 	 * Abstract method for fetching the payment plugin
-	 * @return null
+	 * @return object
 	 */
 	function &getPaymentPlugin() {
-		$returnValue = null;
-		return $returnValue; // Abstract method; subclasses should impl
+		// Abstract method; subclasses should implement.
+		assert(false);
 	}
 
 	/**
@@ -64,21 +60,25 @@ class PaymentManager {
 	 */
 	function isConfigured() {
 		$paymentPlugin =& $this->getPaymentPlugin();
-		if ($paymentPlugin !== null) return $paymentPlugin->isConfigured();
+		if ($paymentPlugin !== null) return $paymentPlugin->isConfigured(PKPApplication::getRequest());
 		return false;
 	}
 
 	/**
 	 * Call the payment plugin's display method
+	 * @param $queuedPaymentId int
+	 * @param $queuedPayment object
+	 * @return boolean
 	 */
 	function displayPaymentForm($queuedPaymentId, &$queuedPayment) {
 		$paymentPlugin =& $this->getPaymentPlugin();
-		if ($paymentPlugin !== null && $paymentPlugin->isConfigured()) return $paymentPlugin->displayPaymentForm($queuedPaymentId, $queuedPayment);
+		if ($paymentPlugin !== null && $paymentPlugin->isConfigured()) return $paymentPlugin->displayPaymentForm($queuedPaymentId, $queuedPayment, $this->request);
 		return false;
 	}
 
 	/**
 	 * Call the payment plugin's settings display method
+	 * @return boolean
 	 */
 	function displayConfigurationForm() {
 		$paymentPlugin =& $this->getPaymentPlugin();
@@ -88,6 +88,7 @@ class PaymentManager {
 
 	/**
 	 * Fetch a queued payment
+	 * @param $queuedPaymentId int
 	 * @return QueuedPayment
 	 */
 	function &getQueuedPayment($queuedPaymentId) {
@@ -97,7 +98,9 @@ class PaymentManager {
 	}
 
 	/**
-	 * Abstract method for fulfilling a queued payment
+	 * Fulfill a queued payment
+	 * @param $queuedPayment QueuedPayment
+	 * @return boolean success/failure
 	 */
 	function fulfillQueuedPayment(&$queuedPayment) {
 		// must be implemented by sub-classes

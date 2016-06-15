@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file SettingsForm.inc.php
+ * @file plugins/generic/webFeed/SettingsForm.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class SettingsForm
@@ -11,9 +12,6 @@
  *
  * @brief Form for journal managers to modify web feeds plugin settings
  */
-
-// $Id$
-
 
 import('lib.pkp.classes.form.Form');
 

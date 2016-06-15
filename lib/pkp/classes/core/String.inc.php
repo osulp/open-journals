@@ -3,7 +3,8 @@
 /**
  * @file classes/core/String.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class String
@@ -58,7 +59,7 @@ class String {
 	 * Perform initialization required for the string wrapper library.
 	 */
 	function init() {
-		$clientCharset = strtolower(Config::getVar('i18n', 'client_charset'));
+		$clientCharset = strtolower_codesafe(Config::getVar('i18n', 'client_charset'));
 
 		// Check if mbstring is installed (requires PHP >= 4.3.0)
 		if (String::hasMBString()) {
@@ -141,7 +142,7 @@ class String {
 		if (defined('ENABLE_MBSTRING')) {
 			require_once './lib/pkp/lib/phputf8/mbstring/core.php';
 		} else {
-		 	require_once './lib/pkp/lib/phputf8/utils/unicode.php';
+			require_once './lib/pkp/lib/phputf8/utils/unicode.php';
 			require_once './lib/pkp/lib/phputf8/native/core.php';
 		}
 		return utf8_strlen($string);
@@ -154,7 +155,7 @@ class String {
 		if (defined('ENABLE_MBSTRING')) {
 			require_once './lib/pkp/lib/phputf8/mbstring/core.php';
 		} else {
-		 	require_once './lib/pkp/lib/phputf8/utils/unicode.php';
+			require_once './lib/pkp/lib/phputf8/utils/unicode.php';
 			require_once './lib/pkp/lib/phputf8/native/core.php';
 		}
 		return utf8_strpos($haystack, $needle, $offset);
@@ -167,7 +168,7 @@ class String {
 		if (defined('ENABLE_MBSTRING')) {
 			require_once './lib/pkp/lib/phputf8/mbstring/core.php';
 		} else {
-		 	require_once './lib/pkp/lib/phputf8/utils/unicode.php';
+			require_once './lib/pkp/lib/phputf8/utils/unicode.php';
 			require_once './lib/pkp/lib/phputf8/native/core.php';
 		}
 		return utf8_strrpos($haystack, $needle, $offset);
@@ -230,7 +231,7 @@ class String {
 		if (defined('ENABLE_MBSTRING')) {
 			require_once './lib/pkp/lib/phputf8/mbstring/core.php';
 		} else {
-		 	require_once './lib/pkp/lib/phputf8/utils/unicode.php';
+			require_once './lib/pkp/lib/phputf8/utils/unicode.php';
 			require_once './lib/pkp/lib/phputf8/native/core.php';
 		}
 		return utf8_strtolower($string);
@@ -243,7 +244,7 @@ class String {
 		if (defined('ENABLE_MBSTRING')) {
 			require_once './lib/pkp/lib/phputf8/mbstring/core.php';
 		} else {
-		 	require_once './lib/pkp/lib/phputf8/utils/unicode.php';
+			require_once './lib/pkp/lib/phputf8/utils/unicode.php';
 			require_once './lib/pkp/lib/phputf8/native/core.php';
 		}
 		return utf8_strtoupper($string);
@@ -257,7 +258,7 @@ class String {
 			require_once './lib/pkp/lib/phputf8/mbstring/core.php';
 			require_once './lib/pkp/lib/phputf8/ucfirst.php';
 		} else {
-		 	require_once './lib/pkp/lib/phputf8/utils/unicode.php';
+			require_once './lib/pkp/lib/phputf8/utils/unicode.php';
 			require_once './lib/pkp/lib/phputf8/native/core.php';
 			require_once './lib/pkp/lib/phputf8/ucfirst.php';
 		}
@@ -371,7 +372,8 @@ class String {
 	/**
 	 * @see http://ca.php.net/manual/en/function.mime_content_type.php
 	 */
-	function mime_content_type($filename) {
+	function mime_content_type($filename, $suggestedExtension = '') {
+		$result = null;
 		if (function_exists('mime_content_type')) {
 			$result = mime_content_type($filename);
 			// mime_content_type appears to return a charset
@@ -379,23 +381,47 @@ class String {
 			if (($i = strpos($result, ';')) !== false) {
 				$result = trim(substr($result, 0, $i));
 			}
-			return $result;
 		} elseif (function_exists('finfo_open')) {
 			$fi =& Registry::get('fileInfo', true, null);
 			if ($fi === null) {
 				$fi = finfo_open(FILEINFO_MIME, Config::getVar('finfo', 'mime_database_path'));
 			}
 			if ($fi !== false) {
-				return strtok(finfo_file($fi, $filename), ' ;');
+				$result = strtok(finfo_file($fi, $filename), ' ;');
 			}
 		}
 
 		// Fall back on an external "file" tool
-		$f = escapeshellarg($filename);
-		$result = trim(`file --brief --mime $f`);
-		// Make sure we just return the mime type.
-		if (($i = strpos($result, ';')) !== false) {
-			$result = trim(substr($result, 0, $i));
+		if (!$result) {
+			$f = escapeshellarg($filename);
+			$result = trim(`file --brief --mime $f`);
+			// Make sure we just return the mime type.
+			if (($i = strpos($result, ';')) !== false) {
+				$result = trim(substr($result, 0, $i));
+			}
+		}
+		
+		// Check ambiguous mimetypes against extension
+		$ext = array_pop(explode('.',$filename));
+		if ($suggestedExtension) {
+			$ext = $suggestedExtension;
+		}
+		// SUGGESTED_EXTENSION:DETECTED_MIME_TYPE => OVERRIDE_MIME_TYPE
+		$ambiguities = array(
+			'css:text/x-c' => 'text/css',
+			'css:text/plain' => 'text/css',
+			'xlsx:application/zip' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			'xltx:application/zip' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+			'potx:application/zip' => 'application/vnd.openxmlformats-officedocument.presentationml.template',
+			'ppsx:application/zip' => 'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
+			'pptx:application/zip' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+			'sldx:application/zip' => 'application/vnd.openxmlformats-officedocument.presentationml.slide',
+			'docx:application/zip' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			'dotx:application/zip' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+			'epub:application/zip' => 'application/epub+zip',
+		);
+		if (isset($ambiguities[strtolower($ext.':'.$result)])) {
+			$result = $ambiguities[strtolower($ext.':'.$result)];
 		}
 		return $result;
 	}
@@ -460,7 +486,7 @@ class String {
 		/* Get all attribute="javascript:foo()" tags. This is
 		* essentially the regex /(=|url\()("?)[^>]* script:/ but
 		* expanded to catch camouflage with spaces and entities. */
-		$preg 	= '/((&#0*61;?|&#x0*3D;?|=)|'
+		$preg	= '/((&#0*61;?|&#x0*3D;?|=)|'
 			. '((u|&#0*85;?|&#x0*55;?|&#0*117;?|&#x0*75;?)\s*'
 			. '(r|&#0*82;?|&#x0*52;?|&#0*114;?|&#x0*72;?)\s*'
 			. '(l|&#0*76;?|&#x0*4c;?|&#0*108;?|&#x0*6c;?)\s*'
@@ -662,17 +688,17 @@ class String {
 				$ret .= "&#" . ($c1 * 0x100 + $c2) . ";";	// this is the fastest string concatenation
 				$last = $i+1;
 			}
-			elseif ($c1>>4 == 14) { 								// 1110 xxxx, 110 prefix for 3 bytes unicode
+			elseif ($c1>>4 == 14) {								// 1110 xxxx, 110 prefix for 3 bytes unicode
 				$ret .= substr($str, $last, $i-$last);			// append all the regular characters we've passed
-				$c2 = ord($str{++$i}); 								// the next byte
-				$c3 = ord($str{++$i}); 								// the third byte
-				$c1 &= 15; 												// remove the 4 bit three bytes prefix
-				$c2 &= 63; 												// remove the 2 bit trailing byte prefix
-				$c3 &= 63; 												// remove the 2 bit trailing byte prefix
+				$c2 = ord($str{++$i});								// the next byte
+				$c3 = ord($str{++$i});								// the third byte
+				$c1 &= 15;												// remove the 4 bit three bytes prefix
+				$c2 &= 63;												// remove the 2 bit trailing byte prefix
+				$c3 &= 63;												// remove the 2 bit trailing byte prefix
 				$c3 |= (($c2 & 3) << 6);							// last 2 bits of c2 become first 2 of c3
-				$c2 >>=2; 													//c2 shifts 2 to the right
+				$c2 >>=2;													//c2 shifts 2 to the right
 				$c2 |= (($c1 & 15) << 4);							// last 4 bits of c1 become first 4 of c2
-				$c1 >>= 4; 												// c1 shifts 4 to the right
+				$c1 >>= 4;												// c1 shifts 4 to the right
 				$ret .= '&#' . (($c1 * 0x10000) + ($c2 * 0x100) + $c3) . ';'; // this is the fastest string concatenation
 				$last = $i+1;
 			}
@@ -852,11 +878,8 @@ class String {
 	 * @return string
 	 */
 	function titleCase($title) {
-		$smallWords = array(
-			'of', 'a', 'the', 'and', 'an', 'or', 'nor', 'but', 'is', 'if', 'then',
-			'else', 'when', 'at', 'from', 'by', 'on', 'off', 'for', 'in', 'out',
-			'over', 'to', 'into', 'with'
-		);
+		AppLocale::requireComponents(LOCALE_COMPONENT_PKP_COMMON);
+		$smallWords = explode(' ', __('common.titleSmallWords'));
 
 		$words = explode(' ', $title);
 		foreach ($words as $key => $word) {
@@ -1081,6 +1104,30 @@ class String {
 
 		// Return the array representing the diff.
 		return $diffResult;
+	}
+
+	/**
+	 * Get a letter $steps places after 'A'
+	 * @param $steps int
+	 */
+	function enumerateAlphabetically($steps) {
+		return chr(ord('A') + $steps);
+	}
+
+	/**
+	 * Create a new UUID (version 4)
+	 * @return string
+	 */
+	function generateUUID() {
+		mt_srand((double)microtime()*10000);
+		$charid = strtoupper(md5(uniqid(rand(), true)));
+		$hyphen = '-';
+		$uuid = substr($charid, 0, 8).$hyphen
+				.substr($charid, 8, 4).$hyphen
+				.'4'.substr($charid,13, 3).$hyphen
+				.strtoupper(dechex(hexdec(ord(substr($charid,16,1))) % 4 + 8)).substr($charid,17, 3).$hyphen
+				.substr($charid,20,12);
+		return $uuid;
 	}
 }
 

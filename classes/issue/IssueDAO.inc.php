@@ -3,7 +3,8 @@
 /**
  * @file classes/issue/IssueDAO.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class IssueDAO
@@ -12,9 +13,6 @@
  *
  * @brief Operations for retrieving and modifying Issue objects.
  */
-
-// $Id$
-
 
 import ('classes.issue.Issue');
 
@@ -25,7 +23,7 @@ class IssueDAO extends DAO {
 		if ($cache->getCacheId() === 'current') {
 			$issue =& $this->getCurrentIssue($id, false);
 		} else {
-			$issue =& $this->getIssueById($id, null, false);
+			$issue =& $this->getIssueByBestIssueId($id, null, false);
 		}
 		$cache->setCache($id, $issue);
 		return $issue;
@@ -58,11 +56,11 @@ class IssueDAO extends DAO {
 		if (isset($journalId)) {
 			$result =& $this->retrieve(
 				'SELECT i.* FROM issues i WHERE issue_id = ? AND journal_id = ?',
-				array($issueId, $journalId)
+				array((int) $issueId, (int) $journalId)
 			);
 		} else {
 			$result =& $this->retrieve(
-				'SELECT i.* FROM issues i WHERE issue_id = ?', $issueId
+				'SELECT i.* FROM issues i WHERE issue_id = ?', (int) $issueId
 			);
 		}
 
@@ -79,39 +77,67 @@ class IssueDAO extends DAO {
 
 	/**
 	 * Retrieve Issue by public issue id
-	 * @param $publicIssueId string
+	 * @param $pubIdType string One of the NLM pub-id-type values or
+	 * 'other::something' if not part of the official NLM list
+	 * (see <http://dtd.nlm.nih.gov/publishing/tag-library/n-4zh0.html>).
+	 * @param $pubId string
 	 * @param $journalId int optional
 	 * @param $useCache boolean optional
 	 * @return Issue object
 	 */
-	function &getIssueByPublicIssueId($publicIssueId, $journalId = null, $useCache = false) {
-		if ($useCache) {
+	function &getIssueByPubId($pubIdType, $pubId, $journalId = null, $useCache = false) {
+		if ($useCache && $pubIdType == 'publisher-id') {
 			$cache =& $this->_getCache('issues');
-			$returner = $cache->get($publicIssueId);
+			$returner = $cache->get($pubId);
 			if ($returner && $journalId != null && $journalId != $returner->getJournalId()) $returner = null;
 			return $returner;
 		}
 
-		if (isset($journalId)) {
-			$result =& $this->retrieve(
-				'SELECT i.* FROM issues i WHERE public_issue_id = ? AND journal_id = ?',
-				array($publicIssueId, $journalId)
-			);
+		$issues =& $this->getIssuesBySetting('pub-id::'.$pubIdType, $pubId, $journalId);
+		if (empty($issues)) {
+			$issue = null;
 		} else {
-			$result =& $this->retrieve(
-				'SELECT i.* FROM issues i WHERE public_issue_id = ?', $publicIssueId
-			);
+			assert(count($issues) == 1);
+			$issue =& $issues[0];
 		}
-
-		$issue = null;
-		if ($result->RecordCount() != 0) {
-			$issue =& $this->_returnIssueFromRow($result->GetRowAssoc(false));
-		}
-
-		$result->Close();
-		unset($result);
 
 		return $issue;
+	}
+
+	/**
+	 * Find issues by querying issue settings.
+	 * @param $settingName string
+	 * @param $settingValue mixed
+	 * @param $journalId int optional
+	 * @return array The issues identified by setting.
+	 */
+	function &getIssuesBySetting($settingName, $settingValue, $journalId = null) {
+		$params = array($settingName);
+		$sql = 'SELECT	i.*
+			FROM	issues i ';
+		if (is_null($settingValue)) {
+			$sql .= 'LEFT JOIN issue_settings ist ON i.issue_id = ist.issue_id AND ist.setting_name = ?
+				WHERE	(ist.setting_value IS NULL OR ist.setting_value = \'\')';
+		} else {
+			$params[] = $settingValue;
+			$sql .= 'INNER JOIN issue_settings ist ON i.issue_id = ist.issue_id
+				WHERE	ist.setting_name = ? AND ist.setting_value = ?';
+		}
+		if ($journalId) {
+			$params[] = (int) $journalId;
+			$sql .= ' AND i.journal_id = ?';
+		}
+		$sql .= ' ORDER BY i.issue_id';
+		$result =& $this->retrieve($sql, $params);
+
+		$issues = array();
+		while (!$result->EOF) {
+			$issues[] =& $this->_returnIssueFromRow($result->GetRowAssoc(false));
+			$result->moveNext();
+		}
+		$result->Close();
+
+		return $issues;
 	}
 
 	/**
@@ -124,11 +150,11 @@ class IssueDAO extends DAO {
 	 */
 	function &getPublishedIssuesByNumber($journalId, $volume = null, $number = null, $year = null) {
 		$sql = 'SELECT i.* FROM issues i WHERE i.published = 1 AND i.journal_id = ?';
-		$params = array($journalId);
+		$params = array((int) $journalId);
 
 		if ($volume !== null) {
 			$sql .= ' AND i.volume = ?';
-			$params[] = $volume;
+			$params[] = (int) $volume;
 		}
 		if ($number !== null) {
 			$sql .= ' AND i.number = ?';
@@ -136,7 +162,7 @@ class IssueDAO extends DAO {
 		}
 		if ($year !== null) {
 			$sql .= ' AND i.year = ?';
-			$params[] = $year;
+			$params[] = (int) $year;
 		}
 
 		$result =& $this->retrieve($sql, $params);
@@ -153,8 +179,8 @@ class IssueDAO extends DAO {
 	 * @return Issue object
 	 */
 	function &getIssueByBestIssueId($issueId, $journalId = null, $useCache = false) {
-		$issue =& $this->getIssueByPublicIssueId($issueId, $journalId, $useCache);
-		if (!isset($issue)) $issue =& $this->getIssueById((int) $issueId, $journalId, $useCache);
+		$issue =& $this->getIssueByPubId('publisher-id', $issueId, $journalId, $useCache);
+		if (!isset($issue) && ctype_digit("$issueId")) $issue =& $this->getIssueById((int) $issueId, $journalId, $useCache);
 		return $issue;
 	}
 
@@ -165,7 +191,9 @@ class IssueDAO extends DAO {
 	 */
 	function &getLastCreatedIssue($journalId) {
 		$result =& $this->retrieveLimit(
-			'SELECT i.* FROM issues i WHERE journal_id = ? ORDER BY year DESC, volume DESC, number DESC', $journalId, 1
+			'SELECT i.* FROM issues i WHERE journal_id = ? ORDER BY year DESC, volume DESC, number DESC',
+			(int) $journalId,
+			1
 		);
 
 		$issue = null;
@@ -193,7 +221,8 @@ class IssueDAO extends DAO {
 		}
 
 		$result =& $this->retrieve(
-			'SELECT i.* FROM issues i WHERE journal_id = ? AND current = 1', $journalId
+			'SELECT i.* FROM issues i WHERE journal_id = ? AND current = 1',
+			(int) $journalId
 		);
 
 		$issue = null;
@@ -213,17 +242,37 @@ class IssueDAO extends DAO {
 	 */
 	function updateCurrentIssue($journalId, $issue = null) {
 		$this->update(
-			'UPDATE issues SET current = 0 WHERE journal_id = ? AND current = 1', $journalId
+			'UPDATE issues SET current = 0 WHERE journal_id = ? AND current = 1',
+			(int) $journalId
 		);
 		if ($issue) $this->updateIssue($issue);
 
-		$cache =& $this->_getCache('issues');
-		$cache->flush();
-		unset($cache);
-		$cache =& $this->_getCache('current');
-		$cache->flush();
+		$this->flushCache();
 	}
 
+
+	/**
+	 * Change the public ID of an issue.
+	 * @param $issueId int
+	 * @param $pubIdType string One of the NLM pub-id-type values or
+	 * 'other::something' if not part of the official NLM list
+	 * (see <http://dtd.nlm.nih.gov/publishing/tag-library/n-4zh0.html>).
+	 * @param $pubId string
+	 */
+	function changePubId($issueId, $pubIdType, $pubId) {
+		$idFields = array(
+			'issue_id', 'locale', 'setting_name'
+		);
+		$updateArray = array(
+			'issue_id' => $issueId,
+			'locale' => '',
+			'setting_name' => 'pub-id::'.$pubIdType,
+			'setting_type' => 'string',
+			'setting_value' => (string)$pubId
+		);
+		$this->replace('issue_settings', $updateArray, $idFields);
+		$this->flushCache();
+	}
 
 	/**
 	 * creates and returns an issue object from a row
@@ -241,9 +290,9 @@ class IssueDAO extends DAO {
 		$issue->setCurrent($row['current']);
 		$issue->setDatePublished($this->datetimeFromDB($row['date_published']));
 		$issue->setDateNotified($this->datetimeFromDB($row['date_notified']));
+		$issue->setLastModified($this->datetimeFromDB($row['last_modified']));
 		$issue->setAccessStatus($row['access_status']);
 		$issue->setOpenAccessDate($this->datetimeFromDB($row['open_access_date']));
-		$issue->setPublicIssueId($row['public_issue_id']);
 		$issue->setShowVolume($row['show_volume']);
 		$issue->setShowNumber($row['show_number']);
 		$issue->setShowYear($row['show_year']);
@@ -267,6 +316,18 @@ class IssueDAO extends DAO {
 	}
 
 	/**
+	 * Get a list of additional fields that do not have
+	 * dedicated accessors.
+	 * @return array
+	 */
+	function getAdditionalFieldNames() {
+		$additionalFields = parent::getAdditionalFieldNames();
+		// FIXME: Move this to a PID plug-in.
+		$additionalFields[] = 'pub-id::publisher-id';
+		return $additionalFields;
+	}
+
+	/**
 	 * Update the localized fields for this object.
 	 * @param $issue
 	 */
@@ -284,10 +345,10 @@ class IssueDAO extends DAO {
 	function insertIssue(&$issue) {
 		$this->update(
 			sprintf('INSERT INTO issues
-				(journal_id, volume, number, year, published, current, date_published, date_notified, access_status, open_access_date, public_issue_id, show_volume, show_number, show_year, show_title, style_file_name, original_style_file_name)
+				(journal_id, volume, number, year, published, current, date_published, date_notified, last_modified, access_status, open_access_date, show_volume, show_number, show_year, show_title, style_file_name, original_style_file_name)
 				VALUES
-				(?, ?, ?, ?, ?, ?, %s, %s, ?, %s, ?, ?, ?, ?, ?, ?, ?)',
-				$this->datetimeToDB($issue->getDatePublished()), $this->datetimeToDB($issue->getDateNotified()), $this->datetimeToDB($issue->getOpenAccessDate())),
+				(?, ?, ?, ?, ?, ?, %s, %s, %s, ?, %s, ?, ?, ?, ?, ?, ?)',
+				$this->datetimeToDB($issue->getDatePublished()), $this->datetimeToDB($issue->getDateNotified()), $this->datetimeToDB($issue->getLastModified()), $this->datetimeToDB($issue->getOpenAccessDate())),
 			array(
 				(int) $issue->getJournalId(),
 				$issue->getVolume(),
@@ -296,7 +357,6 @@ class IssueDAO extends DAO {
 				$issue->getPublished(),
 				$issue->getCurrent(),
 				(int) $issue->getAccessStatus(),
-				$issue->getPublicIssueId(),
 				(int) $issue->getShowVolume(),
 				(int) $issue->getShowNumber(),
 				(int) $issue->getShowYear(),
@@ -336,7 +396,7 @@ class IssueDAO extends DAO {
 	function issueExists($journalId, $volume, $number, $year, $issueId) {
 		$result =& $this->retrieve(
 			'SELECT i.* FROM issues i WHERE journal_id = ? AND volume = ? AND number = ? AND year = ? AND issue_id <> ?',
-			array($journalId, $volume, $number, $year, $issueId)
+			array((int) $journalId, (int) $volume, $number, (int) $year, (int) $issueId)
 		);
 		$returner = $result->RecordCount() != 0 ? true : false;
 
@@ -351,6 +411,7 @@ class IssueDAO extends DAO {
 	 * @param Issue object
 	 */
 	function updateIssue($issue) {
+		$issue->stampModified();
 		$this->update(
 			sprintf('UPDATE issues
 				SET
@@ -362,8 +423,8 @@ class IssueDAO extends DAO {
 					current = ?,
 					date_published = %s,
 					date_notified = %s,
+					last_modified = %s,
 					open_access_date = %s,
-					public_issue_id = ?,
 					access_status = ?,
 					show_volume = ?,
 					show_number = ?,
@@ -372,15 +433,14 @@ class IssueDAO extends DAO {
 					style_file_name = ?,
 					original_style_file_name = ?
 				WHERE issue_id = ?',
-			$this->datetimeToDB($issue->getDatePublished()), $this->datetimeToDB($issue->getDateNotified()), $this->datetimeToDB($issue->getOpenAccessDate())),
+			$this->datetimeToDB($issue->getDatePublished()), $this->datetimeToDB($issue->getDateNotified()), $this->datetimeToDB($issue->getLastModified()), $this->datetimeToDB($issue->getOpenAccessDate())),
 			array(
 				(int) $issue->getJournalId(),
-				$issue->getVolume(),
+				(int) $issue->getVolume(),
 				$issue->getNumber(),
-				$issue->getYear(),
+				(int) $issue->getYear(),
 				(int) $issue->getPublished(),
 				(int) $issue->getCurrent(),
-				$issue->getPublicIssueId(),
 				(int) $issue->getAccessStatus(),
 				(int) $issue->getShowVolume(),
 				(int) $issue->getShowNumber(),
@@ -398,15 +458,11 @@ class IssueDAO extends DAO {
 			$this->resequenceCustomIssueOrders($issue->getJournalId());
 		}
 
-		$cache =& $this->_getCache('issues');
-		$cache->flush();
-		unset($cache);
-		$cache =& $this->_getCache('current');
-		$cache->flush();
+		$this->flushCache();
 	}
 
 	/**
-	 * Delete issue. Deletes associated published articles and cover file.
+	 * Delete issue. Deletes associated issue galleys, cover pages, and published articles.
 	 * @param $issue object issue
 	 */
 	function deleteIssue(&$issue) {
@@ -428,18 +484,28 @@ class IssueDAO extends DAO {
 		$sectionDao =& DAORegistry::getDAO('SectionDAO');
 		$sectionDao->deleteCustomSectionOrdering($issueId);
 
+		// Delete published issue galleys and issue files
+		$issueGalleyDao =& DAORegistry::getDAO('IssueGalleyDAO');
+		$issueGalleyDao->deleteGalleysByIssue($issueId);
+
+		$issueFileDao =& DAORegistry::getDAO('IssueFileDAO');
+		$issueFileDao->deleteIssueFiles($issueId);
+
+		import('classes.file.IssueFileManager');
+		$issueFileManager = new IssueFileManager($issueId);
+		$issueFileManager->deleteIssueTree();
+
+		// Delete published articles
 		$publishedArticleDao =& DAORegistry::getDAO('PublishedArticleDAO');
 		$publishedArticleDao->deletePublishedArticlesByIssueId($issueId);
 
-		$this->update('DELETE FROM issue_settings WHERE issue_id = ?', $issueId);
-		$this->update('DELETE FROM issues WHERE issue_id = ?', $issueId);
+		// Delete issue settings and issue
+		$this->update('DELETE FROM issue_settings WHERE issue_id = ?', (int) $issueId);
+		$this->update('DELETE FROM issues WHERE issue_id = ?', (int) $issueId);
+		$this->update('DELETE FROM custom_issue_orders WHERE issue_id = ?', (int) $issueId);
 		$this->resequenceCustomIssueOrders($issue->getJournalId());
 
-		$cache =& $this->_getCache('issues');
-		$cache->flush();
-		unset($cache);
-		$cache =& $this->_getCache('current');
-		$cache->flush();
+		$this->flushCache();
 	}
 
 	/**
@@ -456,31 +522,44 @@ class IssueDAO extends DAO {
 
 	/**
 	 * Checks if issue exists
-	 * @param $publicIssueId string
+	 * @param $issueId int
+	 * @param $journalId int
 	 * @return boolean
 	 */
 	function issueIdExists($issueId, $journalId) {
 		$result =& $this->retrieve(
 			'SELECT COUNT(*) FROM issues WHERE issue_id = ? AND journal_id = ?',
-			array($issueId, $journalId)
+			array((int) $issueId, (int) $journalId)
 		);
 		return $result->fields[0] ? true : false;
 	}
 
 	/**
-	 * Checks if public identifier exists
-	 * @param $publicIssueId string
+	 * Checks if public identifier exists (other than for the specified
+	 * issue ID, which is treated as an exception).
+	 * @param $pubIdType string One of the NLM pub-id-type values or
+	 * 'other::something' if not part of the official NLM list
+	 * (see <http://dtd.nlm.nih.gov/publishing/tag-library/n-4zh0.html>).
+	 * @param $pubId string
+	 * @param $issueId int An ID to be excluded from the search.
+	 * @param $journalId int
 	 * @return boolean
 	 */
-	function publicIssueIdExists($publicIssueId, $issueId, $journalId) {
+	function pubIdExists($pubIdType, $pubId, $issueId, $journalId) {
 		$result =& $this->retrieve(
-			'SELECT COUNT(*) FROM issues WHERE public_issue_id = ? AND issue_id <> ? AND journal_id = ?', array($publicIssueId, $issueId, $journalId)
+			'SELECT COUNT(*)
+			FROM issue_settings ist
+				INNER JOIN issues i ON ist.issue_id = i.issue_id
+			WHERE ist.setting_name = ? AND ist.setting_value = ? AND i.issue_id <> ? AND i.journal_id = ?',
+			array(
+				'pub-id::'.$pubIdType,
+				$pubId,
+				(int) $issueId,
+				(int) $journalId
+			)
 		);
 		$returner = $result->fields[0] ? true : false;
-
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -491,7 +570,7 @@ class IssueDAO extends DAO {
 	 * @return issue object
 	 */
 	function &getIssueByArticleId($articleId, $journalId = null) {
-		$params = array($articleId);
+		$params = array((int) $articleId);
 		$sql = 'SELECT	i.*
 			FROM	issues i,
 				published_articles pa,
@@ -501,7 +580,7 @@ class IssueDAO extends DAO {
 				pa.article_id = a.article_id';
 		if ($journalId !== null) {
 			$sql .= ' AND i.journal_id = ? AND a.journal_id = i.journal_id';
-			$params[] = $journalId;
+			$params[] = (int) $journalId;
 		}
 
 		$result =& $this->retrieve($sql, $params);
@@ -525,10 +604,11 @@ class IssueDAO extends DAO {
 	 * @return issues object ItemIterator
 	 */
 	function &getIssues($journalId, $rangeInfo = null) {
-		$issues = array();
-
-		$sql = 'SELECT i.* FROM issues i WHERE journal_id = ? ORDER BY current DESC, date_published DESC';
-		$result =& $this->retrieveRange($sql, $journalId, $rangeInfo);
+		$result =& $this->retrieveRange(
+			'SELECT i.* FROM issues i WHERE journal_id = ? ORDER BY current DESC, date_published DESC',
+			(int) $journalId,
+			$rangeInfo
+		);
 
 		$returner = new DAOResultFactory($result, $this, '_returnIssueFromRow');
 		return $returner;
@@ -543,7 +623,7 @@ class IssueDAO extends DAO {
 	function &getPublishedIssues($journalId, $rangeInfo = null) {
 		$result =& $this->retrieveRange(
 			'SELECT i.* FROM issues i LEFT JOIN custom_issue_orders o ON (o.issue_id = i.issue_id) WHERE i.journal_id = ? AND i.published = 1 ORDER BY o.seq ASC, i.current DESC, i.date_published DESC',
-			$journalId, $rangeInfo
+			(int) $journalId, $rangeInfo
 		);
 
 		$returner = new DAOResultFactory($result, $this, '_returnIssueFromRow');
@@ -554,12 +634,12 @@ class IssueDAO extends DAO {
 	 * Get unpublished issues organized by published date
 	 * @param $journalId int
 	 * @param $rangeInfo object DBResultRange
- 	 * @return issues ItemIterator
+	 * @return issues ItemIterator
 	 */
 	function &getUnpublishedIssues($journalId, $rangeInfo = null) {
 		$result =& $this->retrieveRange(
 			'SELECT i.* FROM issues i WHERE journal_id = ? AND published = 0 ORDER BY year ASC, volume ASC, number ASC',
-			$journalId, $rangeInfo
+			(int) $journalId, $rangeInfo
 		);
 
 		$returner = new DAOResultFactory($result, $this, '_returnIssueFromRow');
@@ -572,7 +652,7 @@ class IssueDAO extends DAO {
 	 * @return int
 	 */
 	function getNumArticles($issueId) {
-		$result =& $this->retrieve('SELECT COUNT(*) FROM published_articles WHERE issue_id = ?', $issueId);
+		$result =& $this->retrieve('SELECT COUNT(*) FROM published_articles WHERE issue_id = ?', (int) $issueId);
 		$returner = isset($result->fields[0]) ? $result->fields[0] : 0;
 
 		$result->Close();
@@ -587,7 +667,7 @@ class IssueDAO extends DAO {
 	 */
 	function deleteCustomIssueOrdering($journalId) {
 		return $this->update(
-			'DELETE FROM custom_issue_orders WHERE journal_id = ?', $journalId
+			'DELETE FROM custom_issue_orders WHERE journal_id = ?', (int) $journalId
 		);
 	}
 
@@ -598,16 +678,16 @@ class IssueDAO extends DAO {
 	function resequenceCustomIssueOrders($journalId) {
 		$result =& $this->retrieve(
 			'SELECT i.issue_id FROM issues i LEFT JOIN custom_issue_orders o ON (o.issue_id = i.issue_id) WHERE i.journal_id = ? ORDER BY o.seq',
-			$journalId
+			(int) $journalId
 		);
 
 		for ($i=1; !$result->EOF; $i++) {
 			list($issueId) = $result->fields;
-			$resultB =& $this->retrieve('SELECT issue_id FROM custom_issue_orders WHERE journal_id=? AND issue_id=?', array($journalId, $issueId));
+			$resultB =& $this->retrieve('SELECT issue_id FROM custom_issue_orders WHERE journal_id=? AND issue_id=?', array((int) $journalId, (int) $issueId));
 			if (!$resultB->EOF) {
 				$this->update(
 					'UPDATE custom_issue_orders SET seq = ? WHERE issue_id = ? AND journal_id = ?',
-					array($i, $issueId, $journalId)
+					array($i, (int) $issueId, (int) $journalId)
 				);
 			} else {
 				// This entry is missing. Create it.
@@ -630,7 +710,7 @@ class IssueDAO extends DAO {
 	function customIssueOrderingExists($journalId) {
 		$result =& $this->retrieve(
 			'SELECT COUNT(*) FROM custom_issue_orders WHERE journal_id = ?',
-			$journalId
+			(int) $journalId
 		);
 		$returner = isset($result->fields[0]) && $result->fields[0] == 0 ? false : true;
 
@@ -649,7 +729,7 @@ class IssueDAO extends DAO {
 	function getCustomIssueOrder($journalId, $issueId) {
 		$result =& $this->retrieve(
 			'SELECT seq FROM custom_issue_orders WHERE journal_id = ? AND issue_id = ?',
-			array($journalId, $issueId)
+			array((int) $journalId, (int) $issueId)
 		);
 
 		$returner = null;
@@ -701,11 +781,11 @@ class IssueDAO extends DAO {
 	 * @param $newPos int The new position (0-based) of this section
 	 */
 	function moveCustomIssueOrder($journalId, $issueId, $newPos) {
-		$result =& $this->retrieve('SELECT issue_id FROM custom_issue_orders WHERE journal_id=? AND issue_id=?', array($journalId, $issueId));
+		$result =& $this->retrieve('SELECT issue_id FROM custom_issue_orders WHERE journal_id=? AND issue_id=?', array((int) $journalId, (int) $issueId));
 		if (!$result->EOF) {
 			$this->update(
 				'UPDATE custom_issue_orders SET seq = ? WHERE journal_id = ? AND issue_id = ?',
-				array($newPos, $journalId, $issueId)
+				array($newPos, (int) $journalId, (int) $issueId)
 			);
 		} else {
 			// This entry is missing. Create it.
@@ -714,6 +794,62 @@ class IssueDAO extends DAO {
 		$result->Close();
 		unset($result);
 		$this->resequenceCustomIssueOrders($journalId);
+	}
+
+	/**
+	 * Delete the public IDs of all issues of a journal.
+	 * @param $journalId int
+	 * @param $pubIdType string One of the NLM pub-id-type values or
+	 * 'other::something' if not part of the official NLM list
+	 * (see <http://dtd.nlm.nih.gov/publishing/tag-library/n-4zh0.html>).
+	 */
+	function deleteAllPubIds($journalId, $pubIdType) {
+		$journalId = (int) $journalId;
+		$settingName = 'pub-id::'.$pubIdType;
+
+		// issues
+		$issues =& $this->getIssues($journalId);
+		while ($issue =& $issues->next()) {
+			$this->update(
+				'DELETE FROM issue_settings WHERE setting_name = ? AND issue_id = ?',
+				array(
+					$settingName,
+					(int)$issue->getId()
+				)
+			);
+			unset($issue);
+		}
+		$this->flushCache();
+	}
+
+	/**
+	 * Delete the public ID of an issue.
+	 * @param $issueId int
+	 * @param $pubIdType string One of the NLM pub-id-type values or
+	 * 'other::something' if not part of the official NLM list
+	 * (see <http://dtd.nlm.nih.gov/publishing/tag-library/n-4zh0.html>).
+	 */
+	function deletePubId($issueId, $pubIdType) {
+		$settingName = 'pub-id::'.$pubIdType;
+		$this->update(
+			'DELETE FROM issue_settings WHERE setting_name = ? AND issue_id = ?',
+			array(
+				$settingName,
+				(int)$issueId
+			)
+		);
+		$this->flushCache();
+	}
+
+	/**
+	 * Flush the issue cache.
+	 */
+	function flushCache() {
+		$cache =& $this->_getCache('issues');
+		$cache->flush();
+		unset($cache);
+		$cache =& $this->_getCache('current');
+		$cache->flush();
 	}
 }
 

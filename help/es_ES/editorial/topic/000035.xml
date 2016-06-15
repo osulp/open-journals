@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000035.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Rol del Autor Edición - Corrección de Texto 
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Author's Role Editing - Copyediting 
   *
-  * $Id$
   -->
 
-<topic id="editorial/topic/000035" locale="es_ES" title="Corección de Texto" toc="editorial/toc/000011" key="editorial.authorsRole.editing.copyediting">
+<topic id="editorial/topic/000035" locale="es_ES" title="Corrección de originales" toc="editorial/toc/000011" key="editorial.authorsRole.editing.copyediting">
 	<section>
-		<![CDATA[<p>El Corrector de Textos inicialmente corrige el envío trabajando directamente sobre el archivo electrónico del envío, con sugerencias para mejorar el flujo del lenguaje y la comunicación de significados, y con cambios hechos para asegurar que el envío se adhiera al estilo y formato de la revista (especialmente al formato bibliográfico). El Corrector de Textos carga la versión corregida del envío en el Paso 1 y le envía un correo electrónico al Autor y al Editor de la Sección indicándoles que la corrección inicial del texto ha sido completada. El Autor puede acceder a esta versión en el Paso 1 de la Corrección de Textos pulsando sobre el nombre del archivo, y guardando el archivo en la computadora para abrirlo luego.</p><p><i>Revisión del Autor de la Corrección de Textos</i>. El Autor revisa todos los cambios propuestos por el Corrector de Textos y puede agregar más sugerencias o cambios al envío de acuerdo con las instrucciones de Corrección de Textos seguidas por esta revista. (Esta es la última oportunidad para hacer cambios, ya que en la Corrección de Pruebas sólo se pueden arreglar cambios de errores de escritura y de formato.) El Autor debe responder también cualquier pregunta que le haga el Corrector de Textos (por ejemplo, números de páginas perdidas, etc.); estas preguntas pueden ser encontradas pulsando sobre el ícono al lado de los Comentarios de la Corrección de Textos. Cuando se termine, el Autor debe guardar el archivo en la computadora y cargarlo en el Paso 2 de la Corrección de Textos, esto permitirá que el archivo esté disponible para el Corrector de Textos.</p><p><i>Revisión de los Metadatos</i>. El Autor debe, también, revisar los Metadatos del envío en busca de errores u omisiones. Los metadatos son usados para indexar el envío en la publicación y asistirán, dependiendo de como este indexado, a la capacidad de los lectores para encontrar el artículo.</p> <p>Finalmente, el Autor debe pulsar sobre el ícono de correo electrónico bajo Completo para notificar al Corrector de Textos y al Editor de la Sección que este Paso ya fue completado.</p>]]>	
+		<![CDATA[<p>El corrector/a de originales corrige inicialmente el envío trabajando directamente en el archivo electrónico para asegurarse de que el lenguaje es fluido. También se encarga de mejorar la comunicación del significado y de realizar cambios para asegurar que el envío se ajusta al estilo y formato de la revista (especialmente en al formato de su bibliografía). El corrector/a de originales sube el documento corregido en el paso 1 y se lo envía por correo electrónico al autor/a y al editor/a de sección e indica que ha finalizado la corrección inicial. El autor/a puede acceder a esta versión en el paso 1 de la corrección de originales haciendo clic en el nombre del archivo, guardando el archivo en el ordenador y abriéndolo posteriormente.</p><p><em>Revisión del autor/a de la corrección de originales</em>. El autor/a revisa todos los cambios propuestos por el corrector/a de originales y puede realizar nuevas sugerencias o cambios en el documento, siguiendo las instrucciones de corrección de originales que se establecen en esta revista. (Esta es la última ocasión para realizar estos cambios, ya que la siguiente fase de corrección de pruebas sólo se corrigen los errores tipográficos y de formato.) Además, el autor/a debe responder a las consultas del corrector/a de originales (p. ej., ausencia de números de página, etc.). Estas consultas se pueden ver al hacer clic sobre el icono que se muestra al lado de Comentarios de la corrección. Al finalizar, el autor/a guarda el documento en el ordenador y lo carga en el paso 2 de la corrección, de modo que ahora está disponible para el corrector/a de originales.</p><p><em>Revisión de metadatos</em>. El autor/a también debe revisar los metadatos del envío con el fin de detectar posibles errores u omisiones. Los metadatos se utilizan para indexar los envíos en publicaciones y sirven, dependiendo de cómo están indexados, para ayudar a los lectores/as a localizar los diferentes elementos.</p> <p>Finalmente, el autor/a hace clic en el icono de correo electrónico debajo de Completar para notificar al corrector/a y al editor/a de sección que el paso se ha completado.</p>]]>	
 	</section>
-</topic>
+</topic> 

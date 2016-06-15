@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000032.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Rol del Autor Ínidce - Envíos
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Author's Role Index - Submissions
   *
-  * $Id$
   -->
 
 <topic id="editorial/topic/000032" locale="es_ES" title="Envíos" toc="editorial/toc/000009" key="editorial.authorsRole.submissions">
 	<section>
-		<![CDATA[<p>Cuando se inicia sesión en la revista y se selecciona la función Autor en la página principal del Usuario, se lleva al Autor a los Envíos Activos en fila. Esta página lista los envíos que están actualmente en el proceso editorial. El Autor también puede acceder a envíos hechos anteriormente a la revista bajo el enlace Archivos, y puede enviar un nuevo envío para que este sea considerado pulsando sobre el enlace pertinente bajo Iniciar un Nuevo Envío.</p><p>Si la revista acepta pagos en línea, el Autor puede hacer pagos específicos de envío en esta página. Si la revista lo necesita, existen enlaces para pagar honorarios de envíos que permiten agilizar los envíos y pagar honorarios de publicación que pueden aparecer en está página, para cada artículo, bajo Estado. Pulsar sobre estos entonces llevará al Autor a una página de Pago de Honorarios manual o a la página de pago de PayPal, en donde se puede completar la transacción que sea necesaria. Más información sobre el proceso de pago puede ser encontrada en {help_topic key="journal.managementPages.payments" text="here"}.</p><p>Más información sobre el proceso de Envío puede ser encontrada en {help_topic key="submission.index" text="here"}.</p>]]>	
+		<![CDATA[<p>Al conectarse a la revista y seleccionar el rol de autor/a en la página del área personal, el autor/a es dirigido a la cola de envíos activos. Ahí se muestran aquellos envíos que se encuentran actualmente en el proceso editorial. El autor/a también tiene acceso a envíos pasados que se hicieron a la revista en el enlace Archivo, y puede enviar un nuevo artículo para su valoración haciendo clic en el enlace adecuado en Iniciar un nuevo envío.</p><p>Si la revista acepta pagos en línea, el autor/a puede realizar pagos específicos de envío desde esta página. Cuando la revista así lo requiera, los enlaces que lleven a las páginas donde se pueden pagar las tasas por envío y las tasas de publicación y realizar envíos rápidos se mostrarán en esta página ordenados por artículo, en el apartado Estado. Al hacer clic en alguno de estos enlaces, el autor/a puede llegar a la página de pago de cuota manual o bien a la página de PayPal para completar la transacción. Para obtener más información sobre el proceso de pago acceda a {help_topic key="journal.managementPages.payments" text="aquí"}.</p><p>Para más información sobre el proceso de envío acceda a {help_topic key="submission.index" text="aquí"}.</p>]]>	
 	</section>
-</topic>
+</topic> 

@@ -4,12 +4,12 @@
 <!--
   * 000000.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Introduktion till OJS Huvuddokument
   *
-  * $Id$
   -->
 
 <topic id="intro/topic/000000" locale="en_US" title="Introduktion till OJS" toc="index/toc/000000" subtoc="intro/toc/000000" key="intro.index">
@@ -24,6 +24,6 @@
 <p align="center"><a href="{$baseUrl}/locale/{$locale}/edprocesslarge.png"><img src="{$baseUrl}/locale/{$locale}/edprocess.png" width="480" height="542" border="0" alt="" /></a></p>]]>
 	</section>
 	<section title="Support">
-		<![CDATA[<p>Ett support-forum och bug-rapporteringssystem för tekniska frågor går att komma åt via PKPs <a href="http://pkp.sfu.ca/support/forum/" target="_blank">webbsida</a>.</p><p>Användare som har frågor eller synpunkter kan kontakta de personer som finns listade på tidskriftens webbsida under Om tidskriften.</p>]]>
+		<![CDATA[<p>Ett support-forum och bug-rapporteringssystem för tekniska frågor går att komma åt via PKPs <a href="http://forum.pkp.sfu.ca/" target="_blank">webbsida</a>.</p><p>Användare som har frågor eller synpunkter kan kontakta de personer som finns listade på tidskriftens webbsida under Om tidskriften.</p>]]>
 	</section>
 </topic>
