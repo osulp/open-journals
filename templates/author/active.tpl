@@ -1,12 +1,12 @@
 {**
- * active.tpl
+ * templates/author/active.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Show the details of active submissions.
  *
- * $Id$
  *}
 <div id="submissions">
 <table class="listing" width="100%">
@@ -22,7 +22,7 @@
 	<tr><td colspan="6" class="headseparator">&nbsp;</td></tr>
 
 {iterate from=submissions item=submission}
-	{assign var="articleId" value=$submission->getArticleId()}
+	{assign var="articleId" value=$submission->getId()}
 	{assign var="progress" value=$submission->getSubmissionProgress()}
 
 	<tr valign="top">
@@ -31,7 +31,7 @@
 		<td>{$submission->getSectionAbbrev()|escape}</td>
 		<td>{$submission->getAuthorString(true)|truncate:40:"..."|escape}</td>
 		{if $progress == 0}
-			<td><a href="{url op="submission" path=$articleId}" class="action">{if $submission->getLocalizedTitle()}{$submission->getLocalizedTitle()|strip_unsafe_html|truncate:60:"..."}{else}{translate key="common.untitled"}{/if}</a></td>
+			<td><a href="{url op="submission" path=$articleId}" class="action">{if $submission->getLocalizedTitle()}{$submission->getLocalizedTitle()|strip_tags|truncate:60:"..."}{else}{translate key="common.untitled"}{/if}</a></td>
 			<td align="right">
 				{assign var="status" value=$submission->getSubmissionStatus()}
 				{if $status==STATUS_QUEUED_UNASSIGNED}{translate key="submissions.queuedUnassigned"}
@@ -55,7 +55,7 @@
 
 				{** Payment related actions *}
 				{if $status==STATUS_QUEUED_UNASSIGNED || $status==STATUS_QUEUED_REVIEW}
-					{if $submissionEnabled && !$completedPaymentDAO->hasPaidSubmission($submission->getJournalId(), $submission->getArticleId())}
+					{if $submissionEnabled && !$completedPaymentDAO->hasPaidSubmission($submission->getJournalId(), $submission->getId())}
 						<br />
 						<a href="{url op="paySubmissionFee" path="$articleId"}" class="action">{translate key="payment.submission.paySubmission"}</a>					
 					{elseif $fastTrackEnabled}
@@ -69,16 +69,16 @@
 				{elseif $status==STATUS_QUEUED_EDITING}
 					{if $publicationEnabled}
 						<br />
-						{if $completedPaymentDAO->hasPaidPublication($submission->getJournalId(), $submission->getArticleId())}
+						{if $completedPaymentDAO->hasPaidPublication($submission->getJournalId(), $submission->getId())}
 							{translate key="payment.publication.publicationPaid}
 						{else}
-						 	<a href="{url op="payPublicationFee" path="$articleId"}" class="action">{translate key="payment.publication.payPublication"}</a>
-						 {/if}
+							<a href="{url op="payPublicationFee" path="$articleId"}" class="action">{translate key="payment.publication.payPublication"}</a>
+						{/if}
 				{/if}		
 		{/if}
 			</td>
 		{else}
-			<td><a href="{url op="submit" path=$progress articleId=$articleId}" class="action">{if $submission->getLocalizedTitle()}{$submission->getLocalizedTitle()|strip_unsafe_html|truncate:60:"..."}{else}{translate key="common.untitled"}{/if}</a></td>
+			<td><a href="{url op="submit" path=$progress articleId=$articleId}" class="action">{if $submission->getLocalizedTitle()}{$submission->getLocalizedTitle()|strip_tags|truncate:60:"..."}{else}{translate key="common.untitled"}{/if}</a></td>
 			<td align="right">{translate key="submissions.incomplete"}<br /><a href="{url op="deleteSubmission" path=$articleId}" class="action" onclick="return confirm('{translate|escape:"jsparam" key="author.submissions.confirmDelete"}')">{translate key="common.delete"}</a></td>
 		{/if}
 

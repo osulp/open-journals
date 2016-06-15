@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000033.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Rol del Autor Índice de Revisión - Revisión hecha por Expertos
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Author's Role Review Index - Peer Review
   *
-  * $Id$
   -->
 
-<topic id="editorial/topic/000033" locale="es_ES" title="Revisión hecha por Expertos" toc="editorial/toc/000010" key="editorial.authorsRole.review.peerReview">
+<topic id="editorial/topic/000033" locale="es_ES" title="Evaluación por pares" toc="editorial/toc/000010" key="editorial.authorsRole.review.peerReview">
 	<section>
-		<![CDATA[<p>Varias fechas son registradas en esta página, incluyendo la fecha en la que el editor solicitó Revisores, las fechas en las que se comenzó con la Revisión, y las fechas en las que cada Revisor completó la Revisión. El Autor puede consultar la Política de Revisión en {help_topic key="user.about" text="About the Journal"} para aprender más sobre cómo revisa la revista los envíos. Los Revisores pueden cargar archivos que pueden ser consultados por el Autor, incluyendo versiones del envío con notas. (Para consultar archivos cargados, el Autor puede pulsar sobre el nombre del archivo enlazado con el Archivo Cargado, y así abrir el archivo o guardarlo en su computador para abrirlo luego.)</p>]]>	
+		<![CDATA[<p>Se registran varias fechas en esta página, incluyendo la fecha de la solicitud del editor/a a los revisores/as, las fechas en las cuales las revisiones están en proceso y las fechas en las que los diferentes revisores/as completan las revisiones. El autor/a puede consultar la política de revisión en {help_topic key="user.about" text="Sobre la revista"} para obtener más información acerca de cómo la revista revisa los envíos. Los revisores/as pueden subir archivos para que los consulte el autor/a, incluyendo versiones comentadas del envío. (Para consultar los archivos subidos, el autor/a debe hacer clic en el enlace del nombre del archivo al lado de Archivo subido y abrir el archivo, o guardar el archivo en el ordenador y después abrirlo.)</p>]]>	
 	</section>
-</topic>
+</topic> 

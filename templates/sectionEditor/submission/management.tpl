@@ -1,12 +1,12 @@
 {**
- * management.tpl
+ * templates/sectionEditor/submission/management.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Subtemplate defining the submission management table.
  *
- * $Id$
  *}
 <div id="submission">
 <h3>{translate key="article.submission"}</h3>
@@ -42,6 +42,9 @@
 			{foreach name="suppFiles" from=$suppFiles item=suppFile}
 				{if $suppFile->getFileId()}
 					<a href="{url op="downloadFile" path=$submission->getId()|to_array:$suppFile->getFileId()}" class="file">{$suppFile->getFileName()|escape}</a>
+					&nbsp;&nbsp;
+				{elseif $suppFile->getRemoteURL() != ''}
+					<a href="{$suppFile->getRemoteURL()|escape}" target="_blank">{$suppFile->getRemoteURL()|truncate:20:"..."|escape}</a>
 					&nbsp;&nbsp;
 				{/if}
 				{if $suppFile->getDateModified()}

@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file AnnouncementFeedGatewayPlugin.inc.php
+ * @file plugins/generic/announcementFeed/AnnouncementFeedGatewayPlugin.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AnnouncementFeedGatewayPlugin
@@ -12,9 +13,6 @@
  * @brief Gateway component of announcement feed plugin
  *
  */
-
-// $Id$
-
 
 import('classes.plugins.GatewayPlugin');
 
@@ -148,7 +146,7 @@ class AnnouncementFeedGatewayPlugin extends GatewayPlugin {
 				$dateUpdated = $lastDateUpdated;
 			}
 		} else {
-			$mostRecentAnnouncement =& $announcementDao->getMostRecentAnnouncementByAssocId(ASSOC_TYPE_JOURNAL, $journalId);
+			$mostRecentAnnouncement =& $announcementDao->getMostRecentPublishedAnnouncementByAssocId(ASSOC_TYPE_JOURNAL, $journalId);
 			$dateUpdated = $mostRecentAnnouncement->getDatetimePosted();
 			if (empty($lastDateUpdated) || (strtotime($dateUpdated) > strtotime($lastDateUpdated))) { 
 				$announcementFeedPlugin->updateSetting($journal->getId(), 'dateUpdated', $dateUpdated, 'string');			

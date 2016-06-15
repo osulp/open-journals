@@ -7,7 +7,8 @@
 /**
  * @file classes/mail/Mail.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Mail
@@ -15,8 +16,6 @@
  *
  * @brief Class defining basic operations for handling and sending emails.
  */
-
-// $Id$
 
 
 define('MAIL_EOL', Core::isWindows() ? "\r\n" : "\n");
@@ -39,8 +38,8 @@ class Mail extends DataObject {
 	}
 
 	/**
-	 * Add a private parameter to this email. Private parameters are replaced
-	 * just before sending and are never available via getBody etc.
+	 * Add a private parameter to this email. Private parameters are
+	 * replaced just before sending and are never available via getBody etc.
 	 */
 	function addPrivateParam($name, $value) {
 		$this->privateParams[$name] = $value;
@@ -54,6 +53,11 @@ class Mail extends DataObject {
 		$this->privateParams = $privateParams;
 	}
 
+	/**
+	 * Add a recipient.
+	 * @param $email string
+	 * @param $name string optional
+	 */
 	function addRecipient($email, $name = '') {
 		if (($recipients = $this->getData('recipients')) == null) {
 			$recipients = array();
@@ -63,30 +67,65 @@ class Mail extends DataObject {
 		return $this->setData('recipients', $recipients);
 	}
 
+	/**
+	 * Set the envelope sender (bounce address) for the message,
+	 * if supported.
+	 * @param $envelopeSender string Email address
+	 */
 	function setEnvelopeSender($envelopeSender) {
 		$this->setData('envelopeSender', $envelopeSender);
 	}
 
+	/**
+	 * Get the envelope sender (bounce address) for the message, if set.
+	 * Override any set envelope sender if force_default_envelope_sender config option is in effect.
+	 * @return string
+	 */
 	function getEnvelopeSender() {
-		return $this->getData('envelopeSender');
+		if (Config::getVar('email', 'force_default_envelope_sender') && Config::getVar('email', 'default_envelope_sender')) {
+			return Config::getVar('email', 'default_envelope_sender');
+		} else {
+			return $this->getData('envelopeSender');
+		}
 	}
 
+	/**
+	 * Get the message content type (MIME)
+	 * @return string
+	 */
 	function getContentType() {
 		return $this->getData('content_type');
 	}
 
+	/**
+	 * Set the message content type (MIME)
+	 * @param $contentType string
+	 */
 	function setContentType($contentType) {
 		return $this->setData('content_type', $contentType);
 	}
 
+	/**
+	 * Get the recipients for the message.
+	 * @return array
+	 */
 	function getRecipients() {
 		return $this->getData('recipients');
 	}
 
+	/**
+	 * Set the recipients for the message.
+	 * @param $recipients array
+	 */
 	function setRecipients($recipients) {
 		return $this->setData('recipients', $recipients);
 	}
 
+	/**
+	 * Add a carbon-copy (CC) recipient to the message.
+	 * @param $email string
+	 * @param $name string optional
+	 */
 	function addCc($email, $name = '') {
 		if (($ccs = $this->getData('ccs')) == null) {
 			$ccs = array();
@@ -96,14 +135,27 @@ class Mail extends DataObject {
 		return $this->setData('ccs', $ccs);
 	}
 
+	/**
+	 * Get the carbon-copy (CC) recipients for the message.
+	 * @return array
+	 */
 	function getCcs() {
 		return $this->getData('ccs');
 	}
 
+	/**
+	 * Set the carbon-copy (CC) recipients for the message.
+	 * @param $ccs array
+	 */
 	function setCcs($ccs) {
 		return $this->setData('ccs', $ccs);
 	}
 
+	/**
+	 * Add a blind carbon copy (BCC) recipient to the message.
+	 * @param $email string
+	 * @param $name optional
+	 */
 	function addBcc($email, $name = '') {
 		if (($bccs = $this->getData('bccs')) == null) {
 			$bccs = array();
@@ -113,10 +165,18 @@ class Mail extends DataObject {
 		return $this->setData('bccs', $bccs);
 	}
 
+	/**
+	 * Get the blind carbon copy (BCC) recipients for the message
+	 * @return array
+	 */
 	function getBccs() {
 		return $this->getData('bccs');
 	}
 
+	/**
+	 * Set the blind carbon copy (BCC) recipients for the message.
+	 * @param $bccs array
+	 */
 	function setBccs($bccs) {
 		return $this->setData('bccs', $bccs);
 	}
@@ -146,6 +206,11 @@ class Mail extends DataObject {
 		$this->setBccs(array());
 	}
 
+	/**
+	 * Add an SMTP header to the message.
+	 * @param $name string
+	 * @param $content string
+	 */
 	function addHeader($name, $content) {
 		$updated = false;
 
@@ -167,10 +232,18 @@ class Mail extends DataObject {
 		return $this->setData('headers', $headers);
 	}
 
+	/**
+	 * Get the SMTP headers for the message.
+	 * @return array
+	 */
 	function getHeaders() {
 		return $this->getData('headers');
 	}
 
+	/**
+	 * Set the SMTP headers for the message.
+	 * @param $headers array
+	 */
 	function setHeaders(&$headers) {
 		return $this->setData('headers', $headers);
 	}
@@ -221,42 +294,107 @@ class Mail extends DataObject {
 		}
 	}
 
+	/**
+	 * Get the attachments currently on the message.
+	 * @return array
+	 */
 	function &getAttachments() {
 		$attachments =& $this->getData('attachments');
 		return $attachments;
 	}
 
+	/**
+	 * Return true iff attachments are included in this message.
+	 * @return boolean
+	 */
 	function hasAttachments() {
 		$attachments =& $this->getAttachments();
 		return ($attachments != null && count($attachments) != 0);
 	}
 
+	/**
+	 * Set the sender of the message.
+	 * @param $email string
+	 * @param $name string optional
+	 */
 	function setFrom($email, $name = '') {
 		return $this->setData('from', array('name' => $name, 'email' => $email));
 	}
 
+	/**
+	 * Get the sender of the message.
+	 * @return array
+	 */
 	function getFrom() {
 		return $this->getData('from');
 	}
 
+	/**
+	 * Set the reply-to of the message.
+	 * @param $email string or null to clear
+	 * @param $name string optional
+	 */
+	function setReplyTo($email, $name = '') {
+		if ($email === null) $this->setData('replyTo', null);
+		return $this->setData('replyTo', array('name' => $name, 'email' => $email));
+	}
+
+	/**
+	 * Get the reply-to of the message.
+	 * @return array
+	 */
+	function getReplyTo() {
+		return $this->getData('replyTo');
+	}
+
+	/**
+	 * Return a string containing the reply-to address.
+	 * @return string
+	 */
+	function getReplyToString($send = false) {
+		$replyTo = $this->getReplyTo();
+		if ($replyTo == null) {
+			return null;
+		} else {
+			return (Mail::encodeDisplayName($replyTo['name'], $send) . ' <'.$replyTo['email'].'>');
+		}
+	}
+
+	/**
+	 * Set the subject of the message.
+	 * @param $subject string
+	 */
 	function setSubject($subject) {
 		return $this->setData('subject', $subject);
 	}
 
+	/**
+	 * Get the subject of the message.
+	 * @return string
+	 */
 	function getSubject() {
 		return $this->getData('subject');
 	}
 
+	/**
+	 * Set the body of the message.
+	 * @param $body string
+	 */
 	function setBody($body) {
 		return $this->setData('body', $body);
 	}
 
+	/**
+	 * Get the body of the message.
+	 * @return string
+	 */
 	function getBody() {
 		return $this->getData('body');
 	}
 
 	/**
 	 * Return a string containing the from address.
+	 * Override any from address if force_default_envelope_sender config option is in effect.
 	 * @return string
 	 */
 	function getFromString($send = false) {
@@ -264,7 +402,12 @@ class Mail extends DataObject {
 		if ($from == null) {
 			return null;
 		} else {
-			return (Mail::encodeDisplayName($from['name'], $send) . ' <'.$from['email'].'>');
+			$display = $from['name'];
+			$address = $from['email'];
+			if (Config::getVar('email', 'force_default_envelope_sender') && Config::getVar('email', 'default_envelope_sender')) {
+				return Config::getVar('email', 'default_envelope_sender');
+			}
+			return (Mail::encodeDisplayName($display, $send) . ' <'.$address.'>');
 		}
 	}
 
@@ -368,6 +511,10 @@ class Mail extends DataObject {
 			$this->addHeader('From', $from);
 		}
 
+		if (($r = $this->getReplyToString()) != '') {
+			$this->addHeader('Reply-To', $r);
+		}
+
 		$ccs = $this->getAddressArrayString($this->getCcs(), true, true);
 		if ($ccs != null) {
 			$this->addHeader('Cc', $ccs);
@@ -449,6 +596,12 @@ class Mail extends DataObject {
 		} else return true;
 	}
 
+	/**
+	 * Encode a display name for proper inclusion with an email address.
+	 * @param $displayName string
+	 * @param $send boolean True to encode the results for sending
+	 * @return string
+	 */
 	function encodeDisplayName($displayName, $send = false) {
 		if (String::regexp_match('!^[-A-Za-z0-9\!#\$%&\'\*\+\/=\?\^_\`\{\|\}~]+$!', $displayName)) return $displayName;
 		return ('"' . ($send ? String::encode_mime_header(str_replace(

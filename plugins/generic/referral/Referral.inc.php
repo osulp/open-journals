@@ -3,7 +3,8 @@
 /**
  * @file plugins/generic/referral/Referral.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Referral
@@ -12,9 +13,6 @@
  *
  * @brief Basic class describing a referral.
  */
-
-// $Id$
-
 
 define('REFERRAL_STATUS_NEW',		0x00000001);
 define('REFERRAL_STATUS_ACCEPT',	0x00000002);

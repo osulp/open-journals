@@ -6,7 +6,8 @@
 /**
  * @file classes/notification/form/NotificationMailingListForm.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class NotificationMailingListForm
@@ -14,8 +15,6 @@
  *
  * @brief Form to subscribe to the notification mailing list
  */
-
-// $Id$
 
 
 import('lib.pkp.classes.form.Form');
@@ -25,6 +24,8 @@ class NotificationMailingListForm extends Form {
 	
 	/** @var boolean Whether or not Captcha support is enabled */
 	var $captchaEnabled;
+	/** @var boolean Whether or not Recaptcha support is enabled */
+	var $recaptchaEnabled;
 	
 	/**
 	 * Constructor.
@@ -35,9 +36,12 @@ class NotificationMailingListForm extends Form {
 		import('lib.pkp.classes.captcha.CaptchaManager');
 		$captchaManager = new CaptchaManager();
 		$this->captchaEnabled = ($captchaManager->isEnabled() && Config::getVar('captcha', 'captcha_on_mailinglist'))?true:false;		
+		$this->recaptchaEnabled = Config::getVar('captcha', 'captcha_on_mailinglist') && Config::getVar('captcha', 'recaptcha');
 
 		// Validation checks for this form
-		if ($this->captchaEnabled) {
+		if ($this->captchaEnabled && $this->recaptchaEnabled) {
+			$this->addCheck(new FormValidatorReCaptcha($this, 'recaptcha_challenge_field', 'recaptcha_response_field', Request::getRemoteAddr(), 'common.captchaField.badCaptcha'));
+		} elseif ($this->captchaEnabled) {
 			$this->addCheck(new FormValidatorCaptcha($this, 'captcha', 'captchaId', 'common.captchaField.badCaptcha'));
 		}
 		$this->addCheck(new FormValidatorPost($this));
@@ -52,8 +56,8 @@ class NotificationMailingListForm extends Form {
 		$userVars = array('email', 'confirmEmail');
 		
 		if ($this->captchaEnabled) {
-			$userVars[] = 'captchaId';
-			$userVars[] = 'captcha';
+			$userVars[] = ($this->recaptchaEnabled ? 'recaptcha_challenge_field' : 'captchaId');
+			$userVars[] = ($this->recaptchaEnabled ? 'recaptcha_response_field' : 'captcha');
 		}
 		
 		$this->readUserVars($userVars);
@@ -62,11 +66,18 @@ class NotificationMailingListForm extends Form {
 	/**
 	 * Display the form.
 	 */
-	function display() {
+	function display(&$request) {
 		$templateMgr =& TemplateManager::getManager();
 		$templateMgr->assign('new', true);
 		
-		if ($this->captchaEnabled) {
+		if ($this->captchaEnabled && $this->recaptchaEnabled) {
+			import('lib.pkp.lib.recaptcha.recaptchalib');
+			$publicKey = Config::getVar('captcha', 'recaptcha_public_key');
+			$useSSL = Config::getVar('security', 'force_ssl')?true:false;
+			$reCaptchaHtml = recaptcha_get_html($publicKey, null, $useSSL);
+			$templateMgr->assign('reCaptchaHtml', $reCaptchaHtml);
+			$templateMgr->assign('captchaEnabled', true);
+		} elseif ($this->captchaEnabled) {
 			import('lib.pkp.classes.captcha.CaptchaManager');
 			$captchaManager = new CaptchaManager();
 			$captcha =& $captchaManager->createCaptcha();
@@ -76,7 +87,11 @@ class NotificationMailingListForm extends Form {
 			}
 		}
 
-		$templateMgr->assign('settings', Notification::getSubscriptionSettings());
+		$context =& $request->getContext();
+		if ($context) {
+			$templateMgr->assign('allowRegReviewer', $context->getSetting('allowRegReviewer'));
+			$templateMgr->assign('allowRegAuthor', $context->getSetting('allowRegAuthor'));
+		}
 
 		return parent::display();
 	}
@@ -84,15 +99,17 @@ class NotificationMailingListForm extends Form {
 	/**
 	 * Save the form
 	 */
-	function execute() {
+	function execute(&$request) {
 		$userEmail = $this->getData('email');
+		$context =& $request->getContext();
 
-		$notificationSettingsDao =& DAORegistry::getDAO('NotificationSettingsDAO');
-		if($password = $notificationSettingsDao->subscribeGuest($userEmail)) {
-			Notification::sendMailingListEmail($userEmail, $password, 'NOTIFICATION_MAILLIST_WELCOME');
+		$notificationMailListDao =& DAORegistry::getDAO('NotificationMailListDAO');
+		if($password = $notificationMailListDao->subscribeGuest($userEmail, $context->getId())) {
+			$notificationManager = new NotificationManager();
+			$notificationManager->sendMailingListEmail($request, $userEmail, $password, 'NOTIFICATION_MAILLIST_WELCOME');
 			return true;
 		} else {
-			PKPRequest::redirect(null, 'notification', 'mailListSubscribed', array('error'));
+			$request->redirect(null, 'notification', 'mailListSubscribed', array('error'));
 			return false;
 		}
 	}

@@ -1,12 +1,12 @@
 {**
- * completed.tpl
+ * templates/copyeditor/completed.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Show copyeditor's submission archive.
  *
- * $Id$
  *}
 {if !$dateFrom}
 {assign var="dateFrom" value="--"}
@@ -20,16 +20,17 @@
 {literal}
 <!--
 function sortSearch(heading, direction) {
-  document.submit.sort.value = heading;
-  document.submit.sortDirection.value = direction;
-  document.submit.submit() ;
+	var submitForm = document.getElementById('submit');
+	submitForm.sort.value = heading;
+	submitForm.sortDirection.value = direction;
+	submitForm.submit();
 }
 // -->
 {/literal}
-</script> 
+</script>
 
 <div id="search">
-<form method="post" name="submit" action="{url op="index" path=$pageToDisplay}">
+<form method="post" id="submit" action="{url op="index" path=$pageToDisplay}">
 	<select name="searchField" size="1" class="selectMenu">
 		{html_options_translate options=$fieldOptions selected=$searchField}
 	</select>
@@ -72,7 +73,7 @@ function sortSearch(heading, direction) {
 	</tr>
 	<tr><td colspan="8" class="headseparator">&nbsp;</td></tr>
 {iterate from=submissions item=submission}
-	{assign var="articleId" value=$submission->getArticleId()}
+	{assign var="articleId" value=$submission->getId()}
 	{assign var="initialCopyeditSignoff" value=$submission->getSignoff('SIGNOFF_COPYEDITING_INITIAL')}
 	{assign var="finalCopyeditSignoff" value=$submission->getSignoff('SIGNOFF_COPYEDITING_FINAL')}
 	<tr valign="top">
@@ -80,7 +81,7 @@ function sortSearch(heading, direction) {
 		<td>{$initialCopyeditSignoff->getDateNotified()|date_format:$dateFormatTrunc}</td>
 		<td>{$submission->getSectionAbbrev()|escape}</td>
 		<td>{$submission->getAuthorString(true)|truncate:40:"..."|escape}</td>
-		<td><a href="{url op="submission" path=$articleId}" class="action">{$submission->getLocalizedTitle()|strip_unsafe_html|truncate:60:"..."}</a></td>
+		<td><a href="{url op="submission" path=$articleId}" class="action">{$submission->getLocalizedTitle()|strip_tags|truncate:60:"..."}</a></td>
 		<td>{$finalCopyeditSignoff->getDateCompleted()|date_format:$dateFormatTrunc}</td>
 		<td align="right">
 			{assign var="status" value=$submission->getStatus()}
@@ -89,9 +90,9 @@ function sortSearch(heading, direction) {
 			{elseif $status == STATUS_QUEUED}
 				{translate key="submissions.queued"}
 			{elseif $status == STATUS_PUBLISHED}
-				{print_issue_id articleId="$articleId"}			
+				{print_issue_id articleId="$articleId"}
 			{elseif $status == STATUS_DECLINED}
-				{translate key="submissions.declined"}								
+				{translate key="submissions.declined"}
 			{/if}
 		</td>
 	</tr>

@@ -1,12 +1,12 @@
 {**
- * reviewer.tpl
+ * plugins/blocks/role/reviewer.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Reviewer navigation sidebar.
  *
- * $Id$
  *}
 {* Note that if the user has come in via an access key, the submission counts won't
    be available as the user isn't actually logged in. Therefore we must check to

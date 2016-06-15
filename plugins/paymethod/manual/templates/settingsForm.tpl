@@ -1,11 +1,11 @@
 {**
- * settingsForm.tpl
+ * plugins/paymethod/manual/templates/settingsForm.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Form for manual payment settings.
- *
  *}
 	<tr>
 		<td colspan="2"><h4>{translate key="plugins.paymethod.manual.settings"}</h4></td>

@@ -3,7 +3,8 @@
 /**
  * @file plugins/generic/booksForReview/classes/BookForReviewDAO.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class BookForReviewDAO
@@ -13,15 +14,15 @@
  * @brief Operations for retrieving and modifying BookForReview objects.
  */
 
-import('db.DAO');
+import('lib.pkp.classes.db.DAO');
 
 /* These constants are used for user-selectable search fields. */
-define('BFR_FIELD_PUBLISHER', 	'publisher');
-define('BFR_FIELD_YEAR', 		'year');
-define('BFR_FIELD_ISBN', 		'isbn');
-define('BFR_FIELD_TITLE', 		'title');
+define('BFR_FIELD_PUBLISHER',	'publisher');
+define('BFR_FIELD_YEAR',		'year');
+define('BFR_FIELD_ISBN',		'isbn');
+define('BFR_FIELD_TITLE',		'title');
 define('BFR_FIELD_DESCRIPTION', 'description');
-define('BFR_FIELD_NONE', 		null);
+define('BFR_FIELD_NONE',		null);
 
 
 class BookForReviewDAO extends DAO {
@@ -309,7 +310,7 @@ class BookForReviewDAO extends DAO {
 			$this->bookForReviewAuthorDao->deleteAuthorsByBookForReview($bookId);
 
 			// Delete cover image files (for all locales) from the filesystem
-			import('file.PublicFileManager');
+			import('classes.file.PublicFileManager');
 			$publicFileManager = new PublicFileManager();
 			$locales = AppLocale::getSupportedLocales();
 			foreach ($locales as $locale) {	
@@ -335,6 +336,33 @@ class BookForReviewDAO extends DAO {
 			$book =& $books->next();
 			$this->deleteBookForReviewById($book->getId());
 		}
+	}
+
+	/**
+	 * Retrieve all books by review author for a particular journal.
+	 * @param $journalId int
+	 * @param $userId int, author to match
+	 * @param $rangeInfo object DBRangeInfo object describing range of results to return
+	 * @return object DAOResultFactory containing matching BooksForReview
+	 */
+	function &getBooksForReviewByAuthor($journalId, $userId, $rangeInfo = null) {
+		$bfrPlugin =& PluginRegistry::getPlugin('generic', $this->parentPluginName);
+		$bfrPlugin->import('classes.BookForReview');
+
+		$sql = 'SELECT DISTINCT bfr.*
+				FROM books_for_review bfr
+				WHERE bfr.journal_id = ?
+				AND bfr.user_id = ?
+				ORDER BY bfr.book_id DESC';
+
+		$paramArray = array(
+			(int) $journalId,
+			(int) $userId
+		);
+
+		$result =& $this->retrieveRange($sql, $paramArray, $rangeInfo);
+		$returner = new DAOResultFactory($result, $this, '_returnBookForReviewFromRow');
+		return $returner;
 	}
 
 	/**
@@ -588,7 +616,7 @@ class BookForReviewDAO extends DAO {
 
 		if ($book) {
 			// Delete cover image file from the filesystem and settings
-			import('file.PublicFileManager');
+			import('classes.file.PublicFileManager');
 			$publicFileManager = new PublicFileManager();
 			$publicFileManager->removeJournalFile($book->getJournalId(), $book->getFileName($locale));
 

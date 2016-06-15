@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file functions.inc.php
+ * @file includes/functions.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @ingroup index
@@ -21,11 +22,12 @@
 if (!function_exists('import')) {
 	function import($class) {
 		static $deprecationWarning = null;
-
 		// Try to bypass include path for best performance
 		$filePath = str_replace('.', '/', $class) . '.inc.php';
-		if((@include_once BASE_SYS_DIR.'/'.$filePath) === false) {
-			// Oups, we found a legacy include statement,
+		if (file_exists(BASE_SYS_DIR.'/'.$filePath)) {
+			include_once BASE_SYS_DIR.'/'.$filePath;
+		} else {
+			// Oops, we found a legacy include statement,
 			// let's try the include path then.
 			require_once($filePath);
 			if (is_null($deprecationWarning) && class_exists('Config')) {
@@ -40,6 +42,12 @@ if (!function_exists('file_get_contents')) {
 	// For PHP < 4.3.0
 	function file_get_contents($file) {
 		return join('', file($file));
+	}
+}
+
+if (!function_exists('stream_get_contents')) {
+	function stream_get_contents($fp) {
+		fflush($fp);
 	}
 }
 
@@ -75,7 +83,7 @@ function fatalError($reason) {
 		$isErrorCondition = false;
 	}
 
-	echo "<h1>$reason</h1>";
+	echo "<h1>" . htmlspecialchars($reason) . "</h1>";
 
 	if ($showStackTrace && checkPhpVersion('4.3.0')) {
 		echo "<h4>Stack Trace:</h4>\n";
@@ -269,9 +277,9 @@ function &instantiate($fullyQualifiedClassName, $expectedTypes = null, $expected
 		// Lower case comparison for PHP4 compatibility.
 		// We don't need the String class here as method names are
 		// always US-ASCII.
-		$declaredMethods = array_map('strtolower', get_class_methods($className));
+		$declaredMethods = array_map('strtolower_codesafe', get_class_methods($className));
 		foreach($expectedMethods as $expectedMethod) {
-			$requiredMethod = strtolower($expectedMethod);
+			$requiredMethod = strtolower_codesafe($expectedMethod);
 			if (!in_array($requiredMethod, $declaredMethods)) {
 				return $errorFlag;
 			}
@@ -310,4 +318,38 @@ function arrayClean(&$array) {
 	if (!is_array($array)) return null;
 	return array_filter($array, create_function('$o', 'return !empty($o);'));
 }
+
+
+/**
+ * Recursively strip HTML from a (multidimensional) array.
+ * Assumes entity decoding to UTF-8 (primarily for OAI-PMH)
+ * @param $values array
+ * @return array the cleansed array
+ */
+function stripAssocArray($values, $useClientCharset = false) {
+	foreach ($values as $key => $value) {
+		if (is_scalar($value)) {
+			$values[$key] = strip_tags($values[$key]);
+			if ($useClientCharset && strtolower(Config::getVar('i18n', 'client_charset')) !== 'utf-8') {
+				$values[$key] = html_entity_decode($values[$key], ENT_QUOTES, Config::getVar('i18n', 'client_charset'));
+			} else {
+				$values[$key] = String::html2utf($values[$key]);
+			}
+		} else {
+			$values[$key] = stripAssocArray($values[$key]);
+		}
+	}
+	return $values;
+}
+
+/**
+ * Perform a code-safe strtolower, i.e. one that doesn't behave differently
+ * based on different locales. (tr_TR, I'm looking at you.)
+ * @param $str string Input string
+ * @return string
+ */
+function strtolower_codesafe($str) {
+	return strtr($str, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+}
+
 ?>

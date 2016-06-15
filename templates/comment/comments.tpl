@@ -1,12 +1,12 @@
 {**
- * comments.tpl
+ * templates/comment/comments.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Display comments on an article.
  *
- * $Id$
  *}
 {strip}
 {if $comment}
@@ -119,7 +119,7 @@
 {translate|assign:"readMore" key="comments.readMore"}
 {url|assign:"moreUrl" op="view" path=$articleId|to_array:$galleyId:$childId}
 {assign var=moreLink value="<a href=\"$moreUrl\">$readMore</a>"}
-<p>{$child->getBody()|strip_unsafe_html|nl2br|truncate:300:"... $moreLink"}</p>
+<p>{$child->getBody()|strip_tags|nl2br|truncate:300:"... $moreLink"}</p>
 
 {assign var=grandChildren value=$child->getChildren()}
 {if $grandChildren}<ul>{/if}

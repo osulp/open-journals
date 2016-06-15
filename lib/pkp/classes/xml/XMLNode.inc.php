@@ -3,7 +3,8 @@
 /**
  * @file classes/xml/XMLNode.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class XMLNode
@@ -13,7 +14,6 @@
  * This handler parses an XML document into a tree structure of XMLNode objects.
  */
 
-// $Id$
 
 class XMLNode {
 
@@ -198,7 +198,9 @@ class XMLNode {
 				$value = XMLNode::xmlentities($value);
 				$out .= " $name=\"$value\"";
 			}
-			$out .= '>';
+			if ($this->name !== '!--') {
+				$out .= '>';
+			}
 		}
 		$out .= XMLNode::xmlentities($this->value, ENT_NOQUOTES);
 		foreach ($this->children as $child) {
@@ -209,7 +211,11 @@ class XMLNode {
 			}
 			$out .= $child->toXml($output);
 		}
-		if ($this->name !== null) $out .= '</' . $this->name . '>';
+		if ($this->name === '!--') {
+			$out .= '-->';
+		} else if ($this->name !== null) {
+			$out .= '</' . $this->name . '>';
+		}
 		if ($output !== null) {
 			if ($output === true) echo $out;
 			else fwrite ($output, $out);

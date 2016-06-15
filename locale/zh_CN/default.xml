@@ -2,17 +2,17 @@
 <!DOCTYPE locale SYSTEM "../../lib/pkp/dtd/locale.dtd">
 
 <!--
-  * default.xml
+  * locale/zh_CN/default.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the en_US (U.S. English) locale (default journal settings).
+  * Localization strings.
   *
-  * $Id: default.xml,v 1.2 2009/08/15 00:45:14 asmecher Exp $
   -->
- 
-<locale name="zh_CN" full_name="China .PR">
+
+<locale name="zh_CN" full_name="简体中文">
 	<!-- Section default -->
 	<message key="section.default.title">论文</message>
 	<message key="section.default.abbrev">ART</message>
@@ -140,8 +140,8 @@
 	<message key="default.journalSettings.emailSignature">________________________________________________________________________
 {$journalName}
 {$indexUrl}/{$journalPath}</message>
-	<message key="default.journalSettings.forReaders"><![CDATA[我们鼓励为这个杂志读者签署的出版通知服务，Use the <a href="{$indexUrl}/{$journalPath}/user/register">Register</a> link at the top of the homepage for the journal. This registration will result in the reader receiving the Table of Contents by email for each new issue of the journal. This list also allows the journal to claim a certain level of support or readership. See the journal's <a href="{$indexUrl}/{$journalPath}/about/submissions#privacyStatement">Privacy Statement</a> which assures readers that their name and email address will not be used for other purposes.]]></message>
-	<message key="default.journalSettings.forAuthors"><![CDATA[ 
+	<message key="default.journalSettings.forReaders"><![CDATA[我们鼓励读者订阅期刊出版通知服务。 在期刊主页的顶部使用<a href="{$index Url}/{$journal Path}/user/register">注册</a>链接。完成注册后，读者可以接收到期刊每一期内容的目录表的电子邮件。这样期刊可以获得一定水平度额支持和读者群。期刊上的<a href="{$index Url}/{$journal Path}/about/submissions#privacyStatement">隐私声明</A>保证读者的姓名和电子邮件地址不会被用于其他用途。]]></message>
+	<message key="default.journalSettings.forAuthors"><![CDATA[
 		对这份期刊感兴趣吗？我们建议您看一下<a href="{$indexUrl}/{$journalPath}/about">期刊介绍</a>页面，以了解期刊的栏目方针；也请同时看一下 <a href="{$indexUrl}/{$journalPath}/about/submissions#authorGuidelines">作者指引</a>。作者在进行投稿之前必须在本期刊<a href="{$indexUrl}/{$journalPath}/user/register">注册</a>，而如果已经注册的话，可以简单地<a href="{$indexUrl}/index/login">登入</a>并且开始五个步骤的投稿流程。]]></message>
 	<message key="default.journalSettings.forLibrarians"><![CDATA[
 		我们鼓励图书馆员将这份期刊加入其图书馆的电子期刊数据库之中。同时，这份期刊的开源码出版系统或许会适合图书馆放置他们的职员正在编辑的期刊。(请见<a href="http://pkp.sfu.ca/ojs">Open Journal Systems</a>).]]></message>
@@ -164,4 +164,8 @@
 	<message key="default.journalSettings.membershipFeeDescription">这项费用支付后，您将作为这本期刊的会员，可以在一年内免费阅读这本期刊的所有文章.</message>
 	<message key="default.journalSettings.donationFee">捐赠的期刊</message>
 	<message key="default.journalSettings.donationFeeDescription">对本期刊任何数额的捐赠将感激地接受，您将为编辑提供一个继续提供高质量的杂志给读者的机会.</message>
+	<message key="default.journalSettings.purchaseIssueFee">购买期次</message>
+	<message key="default.journalSettings.purchaseIssueFeeDescription">支付该项费用后您可以查看、下载和打印该期文章。</message>
+	<message key="default.journalSettings.emailHeader">下面的信息以期刊{$journalName}的名义发出。
+________________________________________________________________________</message>
 </locale>

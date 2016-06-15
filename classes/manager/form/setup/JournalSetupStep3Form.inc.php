@@ -3,7 +3,8 @@
 /**
  * @file classes/manager/form/setup/JournalSetupStep3Form.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class JournalSetupStep3Form
@@ -27,8 +28,13 @@ class JournalSetupStep3Form extends JournalSetupForm {
 				'authorGuidelines' => 'string',
 				'submissionChecklist' => 'object',
 				'copyrightNotice' => 'string',
-				'includeCreativeCommons' => 'bool',
+				'includeCopyrightStatement' => 'bool',
+				'licenseURL' => 'string',
+				'includeLicense' => 'bool',
 				'copyrightNoticeAgree' => 'bool',
+				'copyrightHolderType' => 'string',
+				'copyrightHolderOther' => 'string',
+				'copyrightYearBasis' => 'string',
 				'requireAuthorCompetingInterests' => 'bool',
 				'requireReviewerCompetingInterests' => 'bool',
 				'competingInterestGuidelines' => 'string',
@@ -54,6 +60,9 @@ class JournalSetupStep3Form extends JournalSetupForm {
 		);
 
 		$this->addCheck(new FormValidatorEmail($this, 'copySubmissionAckAddress', 'optional', 'user.profile.form.emailRequired'));
+		// Only check the subject classification URL if the subject classification is enabled
+		$this->addCheck(new FormValidatorCustom($this, 'metaSubjectClassUrl', 'optional', 'manager.setup.subjectClassificationURLValid', create_function('$localeUrl, $form, $field, $type, $message', 'if (!$form->getData("metaSubjectClass")) return true; $f = new FormValidatorLocaleUrl($form, $field, $type, $message); return $f->isValid();'), array($this, 'metaSubjectClassUrl', 'optional', 'manager.setup.subjectClassificationURLValid')));
+		$this->addCheck(new FormValidatorURL($this, 'licenseURL', 'optional', 'submission.licenseURLValid'));
 	}
 
 	/**
@@ -61,7 +70,7 @@ class JournalSetupStep3Form extends JournalSetupForm {
 	 * @return array
 	 */
 	function getLocaleFieldNames() {
-		return array('authorGuidelines', 'submissionChecklist', 'copyrightNotice', 'metaDisciplineExamples', 'metaSubjectClassTitle', 'metaSubjectClassUrl', 'metaSubjectExamples', 'metaCoverageGeoExamples', 'metaCoverageChronExamples', 'metaCoverageResearchSampleExamples', 'metaTypeExamples', 'competingInterestGuidelines');
+		return array('authorGuidelines', 'submissionChecklist', 'copyrightNotice', 'metaDisciplineExamples', 'metaSubjectClassTitle', 'metaSubjectClassUrl', 'metaSubjectExamples', 'metaCoverageGeoExamples', 'metaCoverageChronExamples', 'metaCoverageResearchSampleExamples', 'metaTypeExamples', 'competingInterestGuidelines', 'copyrightHolderOther');
 	}
 
 	/**
@@ -77,10 +86,9 @@ class JournalSetupStep3Form extends JournalSetupForm {
 
 		// Add extra java script required for ajax components
 		// FIXME: Must be removed after OMP->OJS backporting
-		$templateMgr->addJavaScript('lib/pkp/js/grid-clickhandler.js');
-		$templateMgr->addJavaScript('lib/pkp/js/modal.js');
+		$templateMgr->addJavaScript('lib/pkp/js/functions/modal.js');
 		$templateMgr->addJavaScript('lib/pkp/js/lib/jquery/plugins/validate/jquery.validate.min.js');
-		$templateMgr->addJavaScript('lib/pkp/js/jqueryValidatorI18n.js');
+		$templateMgr->addJavaScript('lib/pkp/js/functions/jqueryValidatorI18n.js');
 
 		import('classes.mail.MailTemplate');
 		$mail = new MailTemplate('SUBMISSION_ACK');
@@ -92,7 +100,7 @@ class JournalSetupStep3Form extends JournalSetupForm {
 		//
 		// 1) Check whether PHP5 is available.
 		if (!checkPhpVersion('5.0.0')) {
-			AppLocale::requireComponents(array(LOCALE_COMPONENT_PKP_SUBMISSION));
+			AppLocale::requireComponents(LOCALE_COMPONENT_PKP_SUBMISSION);
 			$citationEditorError = 'submission.citations.editor.php5Required';
 		} else {
 			$citationEditorError = null;
@@ -109,17 +117,15 @@ class JournalSetupStep3Form extends JournalSetupForm {
 			// 3) Create a list of all available citation output filters.
 			$router =& $request->getRouter();
 			$journal =& $router->getContext($request);
-			import('lib.pkp.classes.metadata.MetadataDescription');
-			$inputSample = new MetadataDescription('lib.pkp.classes.metadata.nlm.NlmCitationSchema', ASSOC_TYPE_CITATION);
-			$outputSample = 'any string';
-			$filterDao =& DAORegistry::getDAO('FilterDAO');
-			$metaCitationOutputFilterObjects =& $filterDao->getCompatibleObjects($inputSample, $outputSample, $journal->getId());
+			$filterDao =& DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
+			$metaCitationOutputFilterObjects =& $filterDao->getObjectsByGroup('nlm30-element-citation=>plaintext', $journal->getId());
 			foreach($metaCitationOutputFilterObjects as $metaCitationOutputFilterObject) {
 				$metaCitationOutputFilters[$metaCitationOutputFilterObject->getId()] = $metaCitationOutputFilterObject->getDisplayName();
 			}
 			$templateMgr->assign_by_ref('metaCitationOutputFilters', $metaCitationOutputFilters);
 		}
 
+		$templateMgr->assign('ccLicenseOptions', Application::getCCLicenseOptions());
 		parent::display($request, $dispatcher);
 	}
 }

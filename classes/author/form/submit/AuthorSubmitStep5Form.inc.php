@@ -3,7 +3,8 @@
 /**
  * @file classes/author/form/submit/AuthorSubmitStep5Form.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AuthorSubmitStep5Form
@@ -12,18 +13,14 @@
  * @brief Form for Step 5 of author article submission.
  */
 
-// $Id$
-
-
 import('classes.author.form.submit.AuthorSubmitForm');
 
 class AuthorSubmitStep5Form extends AuthorSubmitForm {
-
 	/**
 	 * Constructor.
 	 */
-	function AuthorSubmitStep5Form(&$article, &$journal) {
-		parent::AuthorSubmitForm($article, 5, $journal);
+	function AuthorSubmitStep5Form(&$article, &$journal, $request) {
+		parent::AuthorSubmitForm($article, 5, $journal, $request);
 
 		$this->addCheck(new FormValidatorCustom($this, 'qualifyForWaiver', 'optional', 'author.submit.mustEnterWaiverReason', array(&$this, 'checkWaiverReason')));
 	}
@@ -32,16 +29,16 @@ class AuthorSubmitStep5Form extends AuthorSubmitForm {
 	 * Check that if the user choses a Waiver that they enter text in the comments to Editor
 	 */
 	function checkWaiverReason() {
-		if ( Request::getUserVar('qualifyForWaiver') == false ) return true;
-		else return  (Request::getUserVar('commentsToEditor') != '');
+		if ($this->request->getUserVar('qualifyForWaiver') == false ) return true;
+		else return ($this->request->getUserVar('commentsToEditor') != '');
 	}
 
 	/**
 	 * Display the form.
 	 */
 	function display() {
-		$journal =& Request::getJournal();
-		$user =& Request::getUser();
+		$journal =& $this->request->getJournal();
+		$user =& $this->request->getUser();
 		$templateMgr =& TemplateManager::getManager();
 
 		// Get article file for this article
@@ -49,23 +46,23 @@ class AuthorSubmitStep5Form extends AuthorSubmitForm {
 		$articleFiles =& $articleFileDao->getArticleFilesByArticle($this->articleId);
 
 		$templateMgr->assign_by_ref('files', $articleFiles);
-		$templateMgr->assign_by_ref('journal', Request::getJournal());
+		$templateMgr->assign_by_ref('journal', $journal);
 
 		// Set up required Payment Related Information
 		import('classes.payment.ojs.OJSPaymentManager');
-		$paymentManager =& OJSPaymentManager::getManager();
+		$paymentManager = new OJSPaymentManager($this->request);
 		if ( $paymentManager->submissionEnabled() || $paymentManager->fastTrackEnabled() || $paymentManager->publicationEnabled()) {
 			$templateMgr->assign('authorFees', true);
-			$completedPaymentDAO =& DAORegistry::getDAO('OJSCompletedPaymentDAO');
+			$completedPaymentDao =& DAORegistry::getDAO('OJSCompletedPaymentDAO');
 			$articleId = $this->articleId;
 
-			if ( $paymentManager->submissionEnabled() ) {
-				$templateMgr->assign_by_ref('submissionPayment', $completedPaymentDAO->getSubmissionCompletedPayment ( $journal->getId(), $articleId ));
+			if ($paymentManager->submissionEnabled()) {
+				$templateMgr->assign_by_ref('submissionPayment', $completedPaymentDao->getSubmissionCompletedPayment ($journal->getId(), $articleId));
 				$templateMgr->assign('manualPayment', $journal->getSetting('paymentMethodPluginName') == 'ManualPayment');
 			}
 
-			if ( $paymentManager->fastTrackEnabled()  ) {
-				$templateMgr->assign_by_ref('fastTrackPayment', $completedPaymentDAO->getFastTrackCompletedPayment ( $journal->getId(), $articleId ));
+			if ($paymentManager->fastTrackEnabled()) {
+				$templateMgr->assign_by_ref('fastTrackPayment', $completedPaymentDao->getFastTrackCompletedPayment ($journal->getId(), $articleId));
 			}
 		}
 
@@ -95,21 +92,21 @@ class AuthorSubmitStep5Form extends AuthorSubmitForm {
 	 */
 	function validate() {
 		import('classes.payment.ojs.OJSPaymentManager');
-		$paymentManager =& OJSPaymentManager::getManager();
+		$paymentManager = new OJSPaymentManager($this->request);
 		if ( $paymentManager->submissionEnabled() ) {
-			if ( !parent::validate() ) return false;
+			if (!parent::validate()) return false;
 
-			$journal =& Request::getJournal();
+			$journal =& $this->request->getJournal();
 			$journalId = $journal->getId();
 			$articleId = $this->articleId;
-			$user =& Request::getUser();
+			$user =& $this->request->getUser();
 
-			$completedPaymentDAO =& DAORegistry::getDAO('OJSCompletedPaymentDAO');
-			if ( $completedPaymentDAO->hasPaidSubmission ( $journalId, $articleId )  ) {
+			$completedPaymentDao =& DAORegistry::getDAO('OJSCompletedPaymentDAO');
+			if ($completedPaymentDao->hasPaidSubmission($journalId, $articleId)) {
 				return parent::validate();
-			} elseif ( Request::getUserVar('qualifyForWaiver') && Request::getUserVar('commentsToEditor') != '') {
+			} elseif ($this->request->getUserVar('qualifyForWaiver') && $this->request->getUserVar('commentsToEditor') != '') {
 				return parent::validate();
-			} elseif ( Request::getUserVar('paymentSent') ) {
+			} elseif ($this->request->getUserVar('paymentSent')) {
 				return parent::validate();
 			} else {
 				$queuedPayment =& $paymentManager->createQueuedPayment($journalId, PAYMENT_TYPE_SUBMISSION, $user->getId(), $articleId, $journal->getSetting('submissionFee'));
@@ -130,8 +127,8 @@ class AuthorSubmitStep5Form extends AuthorSubmitForm {
 		$articleDao =& DAORegistry::getDAO('ArticleDAO');
 		$signoffDao =& DAORegistry::getDAO('SignoffDAO');
 
-		$journal = Request::getJournal();
-		$user = Request::getUser();
+		$journal =& $this->request->getJournal();
+		$user =& $this->request->getUser();
 
 		// Update article
 		$article =& $this->article;
@@ -144,6 +141,10 @@ class AuthorSubmitStep5Form extends AuthorSubmitForm {
 		$article->setSubmissionProgress(0);
 		$article->stampStatusModified();
 		$articleDao->updateArticle($article);
+		
+		// Setup default copyright/license metadata at finalization of submission.
+		$article->initializePermissions();
+		$articleDao->updateLocaleFields($article);
 
 		// Designate this as the review version by default.
 		$authorSubmissionDao =& DAORegistry::getDAO('AuthorSubmissionDAO');
@@ -177,17 +178,10 @@ class AuthorSubmitStep5Form extends AuthorSubmitForm {
 
 		$sectionEditors = $this->assignEditors($article);
 
-		$user =& Request::getUser();
-
-		// Update search index
-		import('classes.search.ArticleSearchIndex');
-		ArticleSearchIndex::indexArticleMetadata($article);
-		ArticleSearchIndex::indexArticleFiles($article);
-
 		// Send author notification email
 		import('classes.mail.ArticleMailTemplate');
 		$mail = new ArticleMailTemplate($article, 'SUBMISSION_ACK', null, null, null, false);
-		$mail->setFrom($journal->getSetting('contactEmail'), $journal->getSetting('contactName'));
+		$mail->setReplyTo(null);
 		if ($mail->isEnabled()) {
 			$mail->addRecipient($user->getEmail(), $user->getFullName());
 			// If necessary, BCC the acknowledgement to someone.
@@ -213,14 +207,13 @@ class AuthorSubmitStep5Form extends AuthorSubmitForm {
 				'authorName' => $user->getFullName(),
 				'authorUsername' => $user->getUsername(),
 				'editorialContactSignature' => $journal->getSetting('contactName') . "\n" . $journal->getLocalizedTitle(),
-				'submissionUrl' => Request::url(null, 'author', 'submission', $article->getId())
+				'submissionUrl' => $this->request->url(null, 'author', 'submission', $article->getId())
 			));
-			$mail->send();
+			$mail->send($this->request);
 		}
 
 		import('classes.article.log.ArticleLog');
-		import('classes.article.log.ArticleEventLogEntry');
-		ArticleLog::logEvent($this->articleId, ARTICLE_LOG_ARTICLE_SUBMIT, ARTICLE_LOG_TYPE_AUTHOR, $user->getId(), 'log.author.submitted', array('submissionId' => $article->getId(), 'authorName' => $user->getFullName()));
+		ArticleLog::logEvent($this->request, $article, ARTICLE_LOG_ARTICLE_SUBMIT, 'log.author.submitted', array('authorName' => $user->getFullName()));
 
 		return $this->articleId;
 	}

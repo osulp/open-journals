@@ -3,7 +3,8 @@
 /**
  * @file tools/dbXMLtoSQL.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class dbXMLtoSQL
@@ -11,9 +12,6 @@
  *
  * @brief CLI tool to output the SQL statements corresponding to an XML database schema.
  */
-
-// $Id$
-
 
 require(dirname(__FILE__) . '/bootstrap.inc.php');
 

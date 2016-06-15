@@ -1,12 +1,12 @@
 {**
- * authorIndex.tpl
+ * templates/search/authorIndex.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Index of published articles by author.
  *
- * $Id$
  *}
 {strip}
 {assign var="pageTitle" value="search.authorIndex"}
@@ -27,7 +27,6 @@
 	{/if}
 
 	{assign var=lastAuthorName value=$authorName}
-	{assign var=lastAuthorCountry value=$authorCountry}
 
 	{assign var=authorAffiliation value=$author->getLocalizedAffiliation()}
 	{assign var=authorCountry value=$author->getCountry()}
@@ -41,10 +40,7 @@
 	{strip}
 		<a href="{url op="authors" path="view" firstName=$authorFirstName middleName=$authorMiddleName lastName=$authorLastName affiliation=$authorAffiliation country=$authorCountry}">{$authorName|escape}</a>
 		{if $authorAffiliation}, {$authorAffiliation|escape}{/if}
-		{if $lastAuthorName == $authorName && $lastAuthorCountry != $authorCountry}
-			{* Disambiguate with country if necessary (i.e. if names are the same otherwise) *}
-			{if $authorCountry} ({$author->getCountryLocalized()}){/if}
-		{/if}
+		{if $authorCountry} ({$author->getCountryLocalized()}){/if}
 	{/strip}
 	<br/>
 {/iterate}

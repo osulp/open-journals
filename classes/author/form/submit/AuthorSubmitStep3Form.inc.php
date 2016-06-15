@@ -3,7 +3,8 @@
 /**
  * @file classes/author/form/submit/AuthorSubmitStep3Form.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AuthorSubmitStep3Form
@@ -20,21 +21,26 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 	/**
 	 * Constructor.
 	 */
-	function AuthorSubmitStep3Form(&$article, &$journal) {
-		parent::AuthorSubmitForm($article, 3, $journal);
+	function AuthorSubmitStep3Form(&$article, &$journal, $request) {
+		parent::AuthorSubmitForm($article, 3, $journal, $request);
 
 		// Validation checks for this form
 		$this->addCheck(new FormValidatorCustom($this, 'authors', 'required', 'author.submit.form.authorRequired', create_function('$authors', 'return count($authors) > 0;')));
 		$this->addCheck(new FormValidatorArray($this, 'authors', 'required', 'author.submit.form.authorRequiredFields', array('firstName', 'lastName')));
 		$this->addCheck(new FormValidatorArrayCustom($this, 'authors', 'required', 'author.submit.form.authorRequiredFields', create_function('$email, $regExp', 'return String::regexp_match($regExp, $email);'), array(ValidatorEmail::getRegexp()), false, array('email')));
 		$this->addCheck(new FormValidatorArrayCustom($this, 'authors', 'required', 'user.profile.form.urlInvalid', create_function('$url, $regExp', 'return empty($url) ? true : String::regexp_match($regExp, $url);'), array(ValidatorUrl::getRegexp()), false, array('url')));
+
+		// Add ORCiD validation
+		import('lib.pkp.classes.validation.ValidatorORCID');
+		$this->addCheck(new FormValidatorArrayCustom($this, 'authors', 'required', 'user.profile.form.orcidInvalid', create_function('$orcid', '$validator = new ValidatorORCID(); return empty($orcid) ? true : $validator->isValid($orcid);'), array(), false, array('orcid')));
+
 		$this->addCheck(new FormValidatorLocale($this, 'title', 'required', 'author.submit.form.titleRequired', $this->getRequiredLocale()));
 
 		$sectionDao =& DAORegistry::getDAO('SectionDAO');
 		$section = $sectionDao->getSection($article->getSectionId());
 		$abstractWordCount = $section->getAbstractWordCount();
 		if (isset($abstractWordCount) && $abstractWordCount > 0) {
-			$this->addCheck(new FormValidatorCustom($this, 'abstract', 'required', 'author.submit.form.wordCountAlert', create_function('$abstract, $wordCount', 'foreach ($abstract as $localizedAbstract) {return count(explode(" ",$localizedAbstract)) < $wordCount; }'), array($abstractWordCount)));
+			$this->addCheck(new FormValidatorCustom($this, 'abstract', 'required', 'author.submit.form.wordCountAlert', create_function('$abstract, $wordCount', 'foreach ($abstract as $localizedAbstract) {return count(explode(" ",strip_tags($localizedAbstract))) < $wordCount; }'), array($abstractWordCount)));
 		}
 
 	}
@@ -76,6 +82,7 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 						'affiliation' => $authors[$i]->getAffiliation(null),
 						'country' => $authors[$i]->getCountry(),
 						'email' => $authors[$i]->getEmail(),
+						'orcid' => $authors[$i]->getData('orcid'),
 						'url' => $authors[$i]->getUrl(),
 						'competingInterests' => $authors[$i]->getCompetingInterests(null),
 						'biography' => $authors[$i]->getBiography(null)
@@ -129,7 +136,9 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 	 * @return array
 	 */
 	function getLocaleFieldNames() {
-		return array('title', 'abstract', 'subjectClass', 'subject', 'coverageGeo', 'coverageChron', 'coverageSample', 'type', 'sponsor');
+		return array_merge(parent::getLocaleFieldNames(), 
+							array('title', 'abstract', 'subjectClass', 'subject', 'coverageGeo', 'coverageChron', 
+								'coverageSample', 'type', 'sponsor'));
 	}
 
 	/**
@@ -142,7 +151,7 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 		$countries =& $countryDao->getCountries();
 		$templateMgr->assign_by_ref('countries', $countries);
 
-		if (Request::getUserVar('addAuthor') || Request::getUserVar('delAuthor')  || Request::getUserVar('moveAuthor')) {
+		if ($this->request->getUserVar('addAuthor') || $this->request->getUserVar('delAuthor')  || $this->request->getUserVar('moveAuthor')) {
 			$templateMgr->assign('scrollToAuthor', true);
 		}
 
@@ -154,7 +163,7 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 	 * @param $request Request
 	 * @return int the article ID
 	 */
-	function execute(&$request) {
+	function execute() {
 		$articleDao =& DAORegistry::getDAO('ArticleDAO');
 		$authorDao =& DAORegistry::getDAO('AuthorDAO');
 		$article =& $this->article;
@@ -185,7 +194,7 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 		for ($i=0, $count=count($authors); $i < $count; $i++) {
 			if ($authors[$i]['authorId'] > 0) {
 				// Update an existing author
-				$author =& $article->getAuthor($authors[$i]['authorId']);
+				$author =& $authorDao->getAuthor($authors[$i]['authorId'], $article->getId());
 				$isExistingAuthor = true;
 
 			} else {
@@ -202,6 +211,7 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 				$author->setAffiliation($authors[$i]['affiliation'], null);
 				$author->setCountry($authors[$i]['country']);
 				$author->setEmail($authors[$i]['email']);
+				$author->setData('orcid', $authors[$i]['orcid']);
 				$author->setUrl($authors[$i]['url']);
 				if (array_key_exists('competingInterests', $authors[$i])) {
 					$author->setCompetingInterests($authors[$i]['competingInterests'], null);
@@ -210,17 +220,21 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 				$author->setPrimaryContact($this->getData('primaryContact') == $i ? 1 : 0);
 				$author->setSequence($authors[$i]['seq']);
 
-				if ($isExistingAuthor == false) {
-					$article->addAuthor($author);
+				HookRegistry::call('Author::Form::Submit::AuthorSubmitStep3Form::Execute', array(&$author, &$authors[$i]));
+
+				if ($isExistingAuthor) {
+					$authorDao->updateAuthor($author);
+				} else {
+					$authorDao->insertAuthor($author);
 				}
 			}
 			unset($author);
 		}
 
 		// Remove deleted authors
-		$deletedAuthors = explode(':', $this->getData('deletedAuthors'));
+		$deletedAuthors = preg_split('/:/', $this->getData('deletedAuthors'), -1,  PREG_SPLIT_NO_EMPTY);
 		for ($i=0, $count=count($deletedAuthors); $i < $count; $i++) {
-			$article->removeAuthor($deletedAuthors[$i]);
+			$authorDao->deleteAuthorById($deletedAuthors[$i], $article->getId());
 		}
 
 		parent::execute();
@@ -232,7 +246,7 @@ class AuthorSubmitStep3Form extends AuthorSubmitForm {
 		$citationDao =& DAORegistry::getDAO('CitationDAO');
 		$rawCitationList = $article->getCitations();
 		if ($previousRawCitationList != $rawCitationList) {
-			$citationDao->importCitations($request, ASSOC_TYPE_ARTICLE, $article->getId(), $rawCitationList);
+			$citationDao->importCitations($this->request, ASSOC_TYPE_ARTICLE, $article->getId(), $rawCitationList);
 		}
 
 		return $this->articleId;

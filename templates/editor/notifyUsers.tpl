@@ -1,12 +1,12 @@
 {**
- * email.tpl
+ * templates/editor/notifyUsers.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Editor's "Notify Users" email template form
  *
- * $Id$
  *}
 {strip}
 {assign var="pageTitle" value="email.compose"}
@@ -77,9 +77,15 @@
 	</td>
 </tr>
 {/if}{* publishingMode is PUBLISHING_MODE_SUBSCRIPTION *}
+<tr valign="top">
+	<td><input type="checkbox" name="sendToMailList" /></td>
+	<td class="label">
+		{translate key="editor.notifyUsers.allMailingList" count=$allMailListCount|default:0}
+	</td>
+</tr>
 {if $senderEmail}
 	<tr valign="top">
-		<td><input type="checkbox" name="bccSender" value="1"{if $bccSender} checked{/if}/></td>
+		<td><input type="checkbox" name="ccSelf" /></td>
 		<td class="label">
 			{translate key="email.bccSender" address=$senderEmail|escape}
 		</td>
@@ -101,7 +107,7 @@
 		<label for="includeToc">{translate key="editor.notifyUsers.includeToc"}</label>&nbsp;
 		<select name="issue" id="issue" class="selectMenu">
 			{iterate from=issues item=issue}
-				<option {if $issue->getCurrent()}checked {/if}value="{$issue->getId()}">{$issue->getIssueIdentification()|strip_tags|escape}</option>
+				<option {if $issue->getCurrent()}checked {/if}value="{$issue->getId()}">{$issue->getIssueIdentification()|strip_tags|truncate:40:"..."|escape}</option>
 			{/iterate}
 		</select>
 	</td>

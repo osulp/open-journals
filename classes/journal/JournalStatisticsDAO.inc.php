@@ -3,7 +3,8 @@
 /**
  * @file classes/journal/JournalStatisticsDAO.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class JournalStatisticsDAO
@@ -12,15 +13,55 @@
  * @brief Operations for retrieving journal statistics.
  */
 
-// $Id$
-
-
 define('REPORT_TYPE_JOURNAL',	0x00001);
 define('REPORT_TYPE_EDITOR',	0x00002);
 define('REPORT_TYPE_REVIEWER',	0x00003);
 define('REPORT_TYPE_SECTION',	0x00004);
 
 class JournalStatisticsDAO extends DAO {
+	/**
+	 * Determine the first date the journal was active.
+	 * (This is an approximation but needs to run quickly.)
+	 * @param $journalId int Journal ID
+	 * @return int|null Date in seconds since the UNIX epoch, or null
+	 *  if it could not be determined
+	 */
+	function getFirstActivityDate($journalId) {
+		$result =& $this->retrieve(
+			'SELECT	LEAST(a.date_submitted, COALESCE(pa.date_published, NOW()), COALESCE(i.date_published, NOW())) AS first_date
+			FROM	articles a
+				LEFT JOIN published_articles pa ON (a.article_id = pa.article_id)
+				LEFT JOIN issues i ON (pa.issue_id = i.issue_id)
+				LEFT JOIN articles a2 ON (a2.article_id < a.article_id AND a2.date_submitted IS NOT NULL AND a2.journal_id = ?)
+			WHERE	a2.article_id IS NULL AND
+				a.date_submitted IS NOT NULL AND
+				a.journal_id = ?',
+			array(
+				(int) $journalId,
+				(int) $journalId
+			)
+		);
+
+		$row = $result->GetRowAssoc(false);
+		$firstActivityDate = $this->datetimeFromDB($row['first_date']);
+		$result->Close();
+		// An earlier user registration can override the earliest article activity date
+		$result =& $this->retrieve(
+			'SELECT MIN(u.date_registered) AS first_date FROM users u JOIN roles r ON (u.user_id = r.user_id) WHERE r.journal_id = ?',
+			array(
+				(int) $journalId
+			)
+		);
+		$row = $result->GetRowAssoc(false);
+		$firstUserDate = $this->datetimeFromDB($row['first_date']);
+		if (!$firstActivityDate || ($firstUserDate && $firstActivityDate && strtotime($firstUserDate) < strtotime($firstActivityDate))) {
+			$firstActivityDate = $firstUserDate;
+		}
+		if (!$firstActivityDate) return null;
+		return strtotime($firstActivityDate);
+
+	}
+
 	/**
 	 * Get statistics about articles in the system.
 	 * Returns a map of name => value pairs.
@@ -48,7 +89,7 @@ class JournalStatisticsDAO extends DAO {
 		$sql =	'SELECT	a.article_id,
 				a.date_submitted,
 				pa.date_published,
-				pa.pub_id,
+				pa.published_article_id,
 				d.decision,
 				a.status
 			FROM	articles a
@@ -68,10 +109,8 @@ class JournalStatisticsDAO extends DAO {
 			'numPublishedSubmissions' => 0,
 			'submissionsAccept' => 0,
 			'submissionsDecline' => 0,
-			'submissionsRevise' => 0,
 			'submissionsAcceptPercent' => 0,
 			'submissionsDeclinePercent' => 0,
-			'submissionsRevisePercent' => 0,
 			'daysToPublication' => 0
 		);
 
@@ -92,7 +131,7 @@ class JournalStatisticsDAO extends DAO {
 				$articleIds[] = $row['article_id'];
 				$returner['numSubmissions']++;
 
-				if (!empty($row['pub_id']) && $row['status'] == STATUS_PUBLISHED) {
+				if (!empty($row['published_article_id']) && $row['status'] == STATUS_PUBLISHED) {
 					$returner['numPublishedSubmissions']++;
 				}
 
@@ -111,10 +150,6 @@ class JournalStatisticsDAO extends DAO {
 						$returner['submissionsAccept']++;
 						$returner['numReviewedSubmissions']++;
 						break;
-					case SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS:
-					case SUBMISSION_EDITOR_DECISION_RESUBMIT:
-						$returner['submissionsRevise']++;
-						break;
 					case SUBMISSION_EDITOR_DECISION_DECLINE:
 						$returner['submissionsDecline']++;
 						$returner['numReviewedSubmissions']++;
@@ -132,7 +167,6 @@ class JournalStatisticsDAO extends DAO {
 		if ($returner['numReviewedSubmissions'] != 0) {
 			$returner['submissionsAcceptPercent'] = round($returner['submissionsAccept'] * 100 / $returner['numReviewedSubmissions']);
 			$returner['submissionsDeclinePercent'] = round($returner['submissionsDecline'] * 100 / $returner['numReviewedSubmissions']);
-			$returner['submissionsRevisePercent'] = round($returner['submissionsRevise'] * 100 / $returner['numReviewedSubmissions']);
 		}
 
 		if ($timeToPublicationCount != 0) {
@@ -174,7 +208,7 @@ class JournalStatisticsDAO extends DAO {
 			'SELECT r.role_id, COUNT(r.user_id) AS role_count FROM roles r LEFT JOIN users u ON (r.user_id = u.user_id) WHERE r.journal_id = ?' .
 			($dateStart !== null ? ' AND u.date_registered >= ' . $this->datetimeToDB($dateStart) : '') .
 			($dateEnd !== null ? ' AND u.date_registered <= ' . $this->datetimeToDB($dateEnd) : '') .
-			'GROUP BY r.role_id',
+			' GROUP BY r.role_id',
 			$journalId
 		);
 

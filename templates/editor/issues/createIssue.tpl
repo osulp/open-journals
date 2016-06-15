@@ -1,12 +1,12 @@
 {**
- * createIssue.tpl
+ * templates/editor/issues/createIssue.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Form for creation of an issue
  *
- * $Id$
  *}
 {strip}
 {assign var="pageTitle" value="editor.issues.createIssue"}
@@ -28,7 +28,7 @@
 {translate key="issue.issue"}: <select name="issue" class="selectMenu" onchange="if(this.options[this.selectedIndex].value > 0) location.href='{url|escape:"javascript" op="issueToc" path="ISSUE_ID" escape=false}'.replace('ISSUE_ID', this.options[this.selectedIndex].value)" size="1">{html_options options=$issueOptions selected=$issueId}</select>
 </form>
 
-<form name="issue" method="post" action="{url op="saveIssue"}" enctype="multipart/form-data">
+<form id="issue" method="post" action="{url op="saveIssue"}" enctype="multipart/form-data">
 
 <div class="separator"></div>
 <div id="identification">
@@ -69,7 +69,7 @@
 	{/if}
 	<tr valign="top">
 		<td class="label">{fieldLabel name="title" key="issue.title"}</td>
-		<td class="value"><input type="text" name="title[{$formLocale|escape}]" id="title" value="{$title[$formLocale]|escape}" size="40" maxlength="120" class="textField" /></td>
+		<td class="value"><input type="text" name="title[{$formLocale|escape}]" id="title" value="{$title[$formLocale]|escape}" size="40" class="textField" /></td>
 	</tr>
 	<tr valign="top">
 		<td class="label">{fieldLabel name="description" key="editor.issues.description"}</td>
@@ -78,7 +78,7 @@
 </table>
 </div>
 
-{if $currentJournal->getSetting('publishingMode') == PUBLISHING_MODE_SUBSCRIPTION && !$enableDelayedOpenAccess}
+{if $currentJournal->getSetting('publishingMode') == $smarty.const.PUBLISHING_MODE_SUBSCRIPTION}
 <div class="separator"></div>
 <div id="access">
 <h3>{translate key="editor.issues.access"}</h3>
@@ -89,11 +89,14 @@
 	</tr>
 	<tr valign="top">
 		<td class="label">{fieldLabel name="openAccessDate" key="editor.issues.accessDate"}</td>
-		{if ($Date_Year && $Date_Month && $Date_Day)} 
-			<td class="value">{html_select_date time="$Date_Year-$Date_Month-$Date_Day" end_year="+20" all_extra="class=\"selectMenu\""}</td>
-		{else}
-			<td class="value">{html_select_date end_year="+20" all_extra="class=\"selectMenu\""}</td>
-		{/if}
+		<td class="value">
+			<input type="checkbox" id="enableOpenAccessDate" name="enableOpenAccessDate" {if $openAccessDate}checked="checked" {/if}onchange="document.getElementById('issue').openAccessDateMonth.disabled=this.checked?false:true;document.getElementById('issue').openAccessDateDay.disabled=this.checked?false:true;document.getElementById('issue').openAccessDateYear.disabled=this.checked?false:true;" />&nbsp;{fieldLabel name="enableOpenAccessDate" key="editor.issues.enableOpenAccessDate"}<br/>
+			{if $openAccessDate}
+				{html_select_date prefix=openAccessDate time=$openAccessDate end_year="+20" all_extra="class=\"selectMenu\""}
+			{else}
+				{html_select_date prefix=openAccessDate time=$openAccessDate end_year="+20" all_extra="class=\"selectMenu\" disabled=\"disabled\""}
+			{/if}
+		</td>
 	</tr>
 </table>
 </div>

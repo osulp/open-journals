@@ -3,7 +3,8 @@
 /**
  * @file classes/article/PublishedArticleDAO.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PublishedArticleDAO
@@ -12,9 +13,6 @@
  *
  * @brief Operations for retrieving and modifying PublishedArticle objects.
  */
-
-// $Id$
-
 
 import('classes.article.PublishedArticle');
 
@@ -54,7 +52,8 @@ class PublishedArticleDAO extends DAO {
 		}
 		return $this->articlesInSectionsCache;
 	}
- 	/**
+
+	/**
 	 * Constructor.
 	 */
 	function PublishedArticleDAO() {
@@ -76,7 +75,7 @@ class PublishedArticleDAO extends DAO {
 		$publishedArticles = array();
 
 		$params = array(
-			$issueId,
+			(int) $issueId,
 			'title',
 			$primaryLocale,
 			'title',
@@ -85,14 +84,14 @@ class PublishedArticleDAO extends DAO {
 			$primaryLocale,
 			'abbrev',
 			$locale,
-			$issueId
+			(int) $issueId
 		);
 
 		$sql = 'SELECT DISTINCT
 				pa.*,
 				a.*,
-				COALESCE(stl.setting_value, stpl.setting_value) AS section_title,
-				COALESCE(sal.setting_value, sapl.setting_value) AS section_abbrev,
+				SUBSTRING(COALESCE(stl.setting_value, stpl.setting_value) FROM 1 FOR 255) AS section_title,
+				SUBSTRING(COALESCE(sal.setting_value, sapl.setting_value) FROM 1 FOR 255) AS section_abbrev,
 				COALESCE(o.seq, s.seq) AS section_seq,
 				pa.seq
 			FROM	published_articles pa,
@@ -126,7 +125,7 @@ class PublishedArticleDAO extends DAO {
 	function getPublishedArticleCountByJournalId($journalId) {
 		$result =& $this->retrieve(
 			'SELECT count(*) FROM published_articles pa, articles a WHERE pa.article_id = a.article_id AND a.journal_id = ? AND a.status <> ' . STATUS_ARCHIVED,
-			$journalId
+			(int) $journalId
 		);
 		list($count) = $result->fields;
 		$result->Close();
@@ -167,58 +166,10 @@ class PublishedArticleDAO extends DAO {
 				LEFT JOIN section_settings stl ON (s.section_id = stl.section_id AND stl.setting_name = ? AND stl.locale = ?)
 				LEFT JOIN section_settings sapl ON (s.section_id = sapl.section_id AND sapl.setting_name = ? AND sapl.locale = ?)
 				LEFT JOIN section_settings sal ON (s.section_id = sal.section_id AND sal.setting_name = ? AND sal.locale = ?)
-			WHERE 	i.published = 1
+			WHERE	i.published = 1
 				' . ($journalId !== null?'AND a.journal_id = ?':'') . '
 				AND a.status <> ' . STATUS_ARCHIVED . '
 			ORDER BY date_published '. ($reverse?'DESC':'ASC'),
-			$params,
-			$rangeInfo
-		);
-
-		$returner = new DAOResultFactory($result, $this, '_returnPublishedArticleFromRow');
-		return $returner;
-	}
-
-	/**
-	 * Retrieve all published articles in a journal by DOI.
-	 * @param $doi string
-	 * @param $journalId int
-	 * @param $rangeInfo object
-	 * @return object
-	 */
-	function &getPublishedArticlesByDOI($doi, $journalId = null, $rangeInfo = null) {
-		$primaryLocale = AppLocale::getPrimaryLocale();
-		$locale = AppLocale::getLocale();
-		$params = array(
-			'title',
-			$primaryLocale,
-			'title',
-			$locale,
-			'abbrev',
-			$primaryLocale,
-			'abbrev',
-			$locale,
-			$doi
-		);
-		if ($journalId !== null) $params[] = (int) $journalId;
-		$result =& $this->retrieveRange(
-			'SELECT	pa.*,
-				a.*,
-				COALESCE(stl.setting_value, stpl.setting_value) AS section_title,
-				COALESCE(sal.setting_value, sapl.setting_value) AS section_abbrev
-			FROM	published_articles pa
-				LEFT JOIN articles a ON pa.article_id = a.article_id
-				LEFT JOIN issues i ON pa.issue_id = i.issue_id
-				LEFT JOIN sections s ON s.section_id = a.section_id
-				LEFT JOIN section_settings stpl ON (s.section_id = stpl.section_id AND stpl.setting_name = ? AND stpl.locale = ?)
-				LEFT JOIN section_settings stl ON (s.section_id = stl.section_id AND stl.setting_name = ? AND stl.locale = ?)
-				LEFT JOIN section_settings sapl ON (s.section_id = sapl.section_id AND sapl.setting_name = ? AND sapl.locale = ?)
-				LEFT JOIN section_settings sal ON (s.section_id = sal.section_id AND sal.setting_name = ? AND sal.locale = ?)
-			WHERE 	i.published = 1
-				AND a.doi = ?
-				' . ($journalId !== null?'AND a.journal_id = ?':'') . '
-				AND a.status <> ' . STATUS_ARCHIVED . '
-			ORDER BY date_published',
 			$params,
 			$rangeInfo
 		);
@@ -249,8 +200,8 @@ class PublishedArticleDAO extends DAO {
 			'SELECT DISTINCT
 				pa.*,
 				a.*,
-				COALESCE(stl.setting_value, stpl.setting_value) AS section_title,
-				COALESCE(sal.setting_value, sapl.setting_value) AS section_abbrev,
+				SUBSTRING(COALESCE(stl.setting_value, stpl.setting_value) FROM 1 FOR 255) AS section_title,
+				SUBSTRING(COALESCE(sal.setting_value, sapl.setting_value) FROM 1 FOR 255) AS section_abbrev,
 				s.abstracts_not_required AS abstracts_not_required,
 				s.hide_title AS section_hide_title,
 				s.hide_author AS section_hide_author,
@@ -269,7 +220,7 @@ class PublishedArticleDAO extends DAO {
 				AND a.status <> ' . STATUS_ARCHIVED . '
 			ORDER BY section_seq ASC, pa.seq ASC',
 			array(
-				$issueId,
+				(int) $issueId,
 				'title',
 				$primaryLocale,
 				'title',
@@ -278,7 +229,7 @@ class PublishedArticleDAO extends DAO {
 				$primaryLocale,
 				'abbrev',
 				$locale,
-				$issueId
+				(int) $issueId
 			)
 		);
 
@@ -286,7 +237,7 @@ class PublishedArticleDAO extends DAO {
 		while (!$result->EOF) {
 			$row =& $result->GetRowAssoc(false);
 			$publishedArticle =& $this->_returnPublishedArticleFromRow($row);
-			if ($publishedArticle->getSectionId() != $currSectionId) {
+			if ($publishedArticle->getSectionId() != $currSectionId && !isset($publishedArticles[$publishedArticle->getSectionId()])) {
 				$currSectionId = $publishedArticle->getSectionId();
 				$publishedArticles[$currSectionId] = array(
 					'articles'=> array(),
@@ -349,8 +300,8 @@ class PublishedArticleDAO extends DAO {
 				$primaryLocale,
 				'abbrev',
 				$locale,
-				$sectionId,
-				$issueId
+				(int) $sectionId,
+				(int) $issueId
 			)
 		);
 
@@ -369,24 +320,22 @@ class PublishedArticleDAO extends DAO {
 
 	/**
 	 * Retrieve Published Article by pub id
-	 * @param $pubId int
+	 * @param $publishedArticleId int
 	 * @param $simple boolean Whether or not to skip fetching dependent objects; default false
 	 * @return PublishedArticle object
 	 */
-	function &getPublishedArticleById($pubId, $simple = false) {
+	function &getPublishedArticleById($publishedArticleId, $simple = false) {
 		$result =& $this->retrieve(
-			'SELECT * FROM published_articles WHERE pub_id = ?', $pubId
+			'SELECT * FROM published_articles WHERE published_article_id = ?', (int) $publishedArticleId
 		);
 		$row = $result->GetRowAssoc(false);
 
 		$publishedArticle = new PublishedArticle();
-		$publishedArticle->setPubId($row['pub_id']);
+		$publishedArticle->setPublishedArticleId($row['published_article_id']);
 		$publishedArticle->setId($row['article_id']);
 		$publishedArticle->setIssueId($row['issue_id']);
-		$publishedArticle->setPublicArticleId($row['public_article_id']);
 		$publishedArticle->setDatePublished($this->datetimeFromDB($row['date_published']));
 		$publishedArticle->setSeq($row['seq']);
-		$publishedArticle->setViews($row['views']);
 		$publishedArticle->setAccessStatus($row['access_status']);
 
 		if (!$simple) $publishedArticle->setSuppFiles($this->suppFileDao->getSuppFilesByArticle($row['article_id']));
@@ -423,7 +372,7 @@ class PublishedArticleDAO extends DAO {
 			$primaryLocale,
 			'abbrev',
 			$locale,
-			$articleId
+			(int) $articleId
 		);
 		if ($journalId) $params[] = (int) $journalId;
 
@@ -458,19 +407,41 @@ class PublishedArticleDAO extends DAO {
 
 	/**
 	 * Retrieve published article by public article id
+	 * @param $pubIdType string One of the NLM pub-id-type values or
+	 * 'other::something' if not part of the official NLM list
+	 * (see <http://dtd.nlm.nih.gov/publishing/tag-library/n-4zh0.html>).
+	 * @param $pubId string
 	 * @param $journalId int
-	 * @param $publicArticleId string
 	 * @param $useCache boolean optional
 	 * @return PublishedArticle object
 	 */
-	function &getPublishedArticleByPublicArticleId($journalId, $publicArticleId, $useCache = false) {
-		if ($useCache) {
+	function &getPublishedArticleByPubId($pubIdType, $pubId, $journalId = null, $useCache = false) {
+		if ($useCache && $pubIdType == 'publisher-id') {
 			$cache =& $this->_getPublishedArticleCache();
-			$returner = $cache->get($publicArticleId);
+			$returner = $cache->get($pubId);
 			if ($returner && $journalId != null && $journalId != $returner->getJournalId()) $returner = null;
 			return $returner;
 		}
 
+		$publishedArticle = null;
+		if (!empty($pubId)) {
+			$publishedArticles =& $this->getBySetting('pub-id::'.$pubIdType, $pubId, $journalId);
+			if (!empty($publishedArticles)) {
+				assert(count($publishedArticles) == 1);
+				$publishedArticle =& $publishedArticles[0];
+			}
+		}
+		return $publishedArticle;
+	}
+
+	/**
+	 * Find published articles by querying article settings.
+	 * @param $settingName string
+	 * @param $settingValue mixed
+	 * @param $journalId int optional
+	 * @return array The articles identified by setting.
+	 */
+	function &getBySetting($settingName, $settingValue, $journalId = null) {
 		$primaryLocale = AppLocale::getPrimaryLocale();
 		$locale = AppLocale::getLocale();
 
@@ -483,37 +454,43 @@ class PublishedArticleDAO extends DAO {
 			$primaryLocale,
 			'abbrev',
 			$locale,
-			$publicArticleId
+			$settingName
 		);
-		if ($journalId) $params[] = (int) $journalId;
 
-		$result =& $this->retrieve(
-			'SELECT	pa.*,
+		$sql = 'SELECT	pa.*,
 				a.*,
 				COALESCE(stl.setting_value, stpl.setting_value) AS section_title,
 				COALESCE(sal.setting_value, sapl.setting_value) AS section_abbrev
-			FROM	published_articles pa,
-				articles a
+			FROM	published_articles pa
+				INNER JOIN articles a ON pa.article_id = a.article_id
 				LEFT JOIN sections s ON s.section_id = a.section_id
 				LEFT JOIN section_settings stpl ON (s.section_id = stpl.section_id AND stpl.setting_name = ? AND stpl.locale = ?)
 				LEFT JOIN section_settings stl ON (s.section_id = stl.section_id AND stl.setting_name = ? AND stl.locale = ?)
 				LEFT JOIN section_settings sapl ON (s.section_id = sapl.section_id AND sapl.setting_name = ? AND sapl.locale = ?)
-				LEFT JOIN section_settings sal ON (s.section_id = sal.section_id AND sal.setting_name = ? AND sal.locale = ?)
-			WHERE	pa.article_id = a.article_id
-				AND pa.public_article_id = ?
-				' . ($journalId?' AND a.journal_id = ?':''),
-			$params
-		);
-
-		$publishedArticle = null;
-		if ($result->RecordCount() != 0) {
-			$publishedArticle =& $this->_returnPublishedArticleFromRow($result->GetRowAssoc(false));
+				LEFT JOIN section_settings sal ON (s.section_id = sal.section_id AND sal.setting_name = ? AND sal.locale = ?) ';
+		if (is_null($settingValue)) {
+			$sql .= 'LEFT JOIN article_settings ast ON a.article_id = ast.article_id AND ast.setting_name = ?
+				WHERE	(ast.setting_value IS NULL OR ast.setting_value = \'\')';
+		} else {
+			$params[] = (string) $settingValue; // Bug #8853
+			$sql .= 'INNER JOIN article_settings ast ON a.article_id = ast.article_id
+				WHERE	ast.setting_name = ? AND ast.setting_value = ?';
 		}
+		if ($journalId) {
+			$params[] = (int) $journalId;
+			$sql .= ' AND a.journal_id = ?';
+		}
+		$sql .= ' ORDER BY pa.issue_id, a.article_id';
+		$result =& $this->retrieve($sql, $params);
 
+		$publishedArticles = array();
+		while (!$result->EOF) {
+			$publishedArticles[] =& $this->_returnPublishedArticleFromRow($result->GetRowAssoc(false));
+			$result->moveNext();
+		}
 		$result->Close();
-		unset($result);
 
-		return $publishedArticle;
+		return $publishedArticles;
 	}
 
 	/**
@@ -525,8 +502,8 @@ class PublishedArticleDAO extends DAO {
 	 * @return PublishedArticle object
 	 */
 	function &getPublishedArticleByBestArticleId($journalId, $articleId, $useCache = false) {
-		$article =& $this->getPublishedArticleByPublicArticleId((int) $journalId, $articleId, $useCache);
-		if (!isset($article)) $article =& $this->getPublishedArticleByArticleId((int) $articleId, (int) $journalId, $useCache);
+		$article =& $this->getPublishedArticleByPubId('publisher-id', $articleId, (int) $journalId, $useCache);
+		if (!isset($article) && ctype_digit("$articleId")) $article =& $this->getPublishedArticleByArticleId((int) $articleId, (int) $journalId, $useCache);
 		return $article;
 	}
 
@@ -534,8 +511,8 @@ class PublishedArticleDAO extends DAO {
 	 * Retrieve "article_id"s for published articles for a journal, sorted
 	 * alphabetically.
 	 * Note that if journalId is null, alphabetized article IDs for all
-	 * journals are returned.
-	 * @param $journalId int optional
+	 * enabled journals are returned.
+	 * @param $journalId int Optional journal ID to use in restricting results
 	 * @param $useCache boolean optional
 	 * @return Array
 	 */
@@ -544,7 +521,7 @@ class PublishedArticleDAO extends DAO {
 			'cleanTitle', AppLocale::getLocale(),
 			'cleanTitle'
 		);
-		if (isset($journalId)) $params[] = $journalId;
+		if (isset($journalId)) $params[] = (int) $journalId;
 
 		$articleIds = array();
 		$functionName = $useCache?'retrieveCached':'retrieve';
@@ -554,6 +531,7 @@ class PublishedArticleDAO extends DAO {
 			FROM	published_articles pa,
 				issues i,
 				articles a
+				JOIN journals j ON (a.journal_id = j.journal_id)
 				LEFT JOIN sections s ON s.section_id = a.section_id
 				LEFT JOIN article_settings atl ON (a.article_id = atl.article_id AND atl.setting_name = ? AND atl.locale = ?)
 				LEFT JOIN article_settings atpl ON (a.article_id = atpl.article_id AND atpl.setting_name = ? AND atpl.locale = a.locale)
@@ -561,7 +539,7 @@ class PublishedArticleDAO extends DAO {
 				AND i.issue_id = pa.issue_id
 				AND i.published = 1
 				AND s.section_id IS NOT NULL' .
-				(isset($journalId)?' AND a.journal_id = ?':'') . ' ORDER BY article_title',
+				(isset($journalId)?' AND a.journal_id = ?':' AND j.enabled = 1') . ' ORDER BY article_title',
 			$params
 		);
 
@@ -589,13 +567,45 @@ class PublishedArticleDAO extends DAO {
 		$articleIds = array();
 		$functionName = $useCache?'retrieveCached':'retrieve';
 		$result =& $this->$functionName(
-			'SELECT a.article_id AS pub_id FROM published_articles pa, articles a LEFT JOIN sections s ON s.section_id = a.section_id WHERE pa.article_id = a.article_id' . (isset($journalId)?' AND a.journal_id = ?':'') . ' ORDER BY pa.date_published DESC',
-			isset($journalId)?$journalId:false
+			'SELECT	a.article_id AS pub_id
+			FROM	published_articles pa
+				JOIN articles a ON a.article_id = pa.article_id
+				JOIN sections s ON s.section_id = a.section_id
+				JOIN issues i ON pa.issue_id = i.issue_id
+			WHERE	i.published = 1
+				' . (isset($journalId)?' AND a.journal_id = ?':'') . '
+			ORDER BY pa.date_published DESC',
+			isset($journalId)?(int) $journalId:false
 		);
 
 		while (!$result->EOF) {
 			$row = $result->getRowAssoc(false);
 			$articleIds[] = $row['pub_id'];
+			$result->moveNext();
+		}
+
+		$result->Close();
+		unset($result);
+
+		return $articleIds;
+	}
+	/**
+	 * Retrieve "article_id"s for published articles for a journal section, sorted
+	 * by reverse publish date.
+	 * @param $sectionId int
+	 * @return Array
+	 */
+	function getPublishedArticleIdsBySection($sectionId, $useCache = true) {
+		$articleIds = array();
+		$functionName = $useCache?'retrieveCached':'retrieve';
+		$result =& $this->$functionName(
+			'SELECT a.article_id FROM published_articles pa, articles a, issues i WHERE pa.issue_id = i.issue_id AND i.published = 1 AND pa.article_id = a.article_id AND a.section_id = ? ORDER BY pa.date_published DESC',
+			(int) $sectionId
+		);
+
+		while (!$result->EOF) {
+			$row = $result->getRowAssoc(false);
+			$articleIds[] = $row['article_id'];
 			$result->moveNext();
 		}
 
@@ -613,13 +623,11 @@ class PublishedArticleDAO extends DAO {
 	 */
 	function &_returnPublishedArticleFromRow($row, $callHooks = true) {
 		$publishedArticle = new PublishedArticle();
-		$publishedArticle->setPubId($row['pub_id']);
+		$publishedArticle->setPublishedArticleId($row['published_article_id']);
 		$publishedArticle->setIssueId($row['issue_id']);
 		$publishedArticle->setDatePublished($this->datetimeFromDB($row['date_published']));
 		$publishedArticle->setSeq($row['seq']);
-		$publishedArticle->setViews($row['views']);
 		$publishedArticle->setAccessStatus($row['access_status']);
-		$publishedArticle->setPublicArticleId($row['public_article_id']);
 
 		$publishedArticle->setGalleys($this->galleyDao->getGalleysByArticle($row['article_id']));
 
@@ -642,21 +650,20 @@ class PublishedArticleDAO extends DAO {
 	function insertPublishedArticle(&$publishedArticle) {
 		$this->update(
 			sprintf('INSERT INTO published_articles
-				(article_id, issue_id, date_published, seq, access_status, public_article_id)
+				(article_id, issue_id, date_published, seq, access_status)
 				VALUES
-				(?, ?, %s, ?, ?, ?)',
+				(?, ?, %s, ?, ?)',
 				$this->datetimeToDB($publishedArticle->getDatePublished())),
 			array(
-				$publishedArticle->getId(),
-				$publishedArticle->getIssueId(),
+				(int) $publishedArticle->getId(),
+				(int) $publishedArticle->getIssueId(),
 				$publishedArticle->getSeq(),
-				$publishedArticle->getAccessStatus(),
-				$publishedArticle->getPublicArticleId()
+				$publishedArticle->getAccessStatus()
 			)
 		);
 
-		$publishedArticle->setPubId($this->getInsertPublishedArticleId());
-		return $publishedArticle->getPubId();
+		$publishedArticle->setPublishedArticleId($this->getInsertPublishedArticleId());
+		return $publishedArticle->getPublishedArticleId();
 	}
 
 	/**
@@ -664,16 +671,16 @@ class PublishedArticleDAO extends DAO {
 	 * @return int
 	 */
 	function getInsertPublishedArticleId() {
-		return $this->getInsertId('published_articles', 'pub_id');
+		return $this->getInsertId('published_articles', 'published_article_id');
 	}
 
 	/**
 	 * removes an published Article by id
-	 * @param pubId int
+	 * @param $publishedArticleId int
 	 */
-	function deletePublishedArticleById($pubId) {
+	function deletePublishedArticleById($publishedArticleId) {
 		$this->update(
-			'DELETE FROM published_articles WHERE pub_id = ?', $pubId
+			'DELETE FROM published_articles WHERE published_article_id = ?', (int) $publishedArticleId
 		);
 
 		$this->flushCache();
@@ -686,7 +693,7 @@ class PublishedArticleDAO extends DAO {
 	 */
 	function deletePublishedArticleByArticleId($articleId) {
 		return $this->update(
-			'DELETE FROM published_articles WHERE article_id = ?', $articleId
+			'DELETE FROM published_articles WHERE article_id = ?', (int) $articleId
 		);
 		$this->flushCache();
 	}
@@ -697,7 +704,7 @@ class PublishedArticleDAO extends DAO {
 	 */
 	function deletePublishedArticlesBySectionId($sectionId) {
 		$result =& $this->retrieve(
-			'SELECT pa.article_id AS article_id FROM published_articles pa, articles a WHERE pa.article_id = a.article_id AND a.section_id = ?', $sectionId
+			'SELECT pa.article_id AS article_id FROM published_articles pa, articles a WHERE pa.article_id = a.article_id AND a.section_id = ?', (int) $sectionId
 		);
 
 		while (!$result->EOF) {
@@ -719,7 +726,7 @@ class PublishedArticleDAO extends DAO {
 	 */
 	function deletePublishedArticlesByIssueId($issueId) {
 		$this->update(
-			'DELETE FROM published_articles WHERE issue_id = ?', $issueId
+			'DELETE FROM published_articles WHERE issue_id = ?', (int) $issueId
 		);
 
 		$this->flushCache();
@@ -737,17 +744,15 @@ class PublishedArticleDAO extends DAO {
 					issue_id = ?,
 					date_published = %s,
 					seq = ?,
-					access_status = ?,
-					public_article_id = ?
-				WHERE pub_id = ?',
+					access_status = ?
+				WHERE published_article_id = ?',
 				$this->datetimeToDB($publishedArticle->getDatePublished())),
 			array(
-				$publishedArticle->getId(),
-				$publishedArticle->getIssueId(),
+				(int) $publishedArticle->getId(),
+				(int) $publishedArticle->getIssueId(),
 				$publishedArticle->getSeq(),
 				$publishedArticle->getAccessStatus(),
-				$publishedArticle->getPublicArticleId(),
-				$publishedArticle->getPubId()
+				(int) $publishedArticle->getPublishedArticleId()
 			)
 		);
 
@@ -756,13 +761,13 @@ class PublishedArticleDAO extends DAO {
 
 	/**
 	 * updates a published article field
-	 * @param $pubId int
+	 * @param $publishedArticleId int
 	 * @param $field string
 	 * @param $value mixed
 	 */
-	function updatePublishedArticleField($pubId, $field, $value) {
+	function updatePublishedArticleField($publishedArticleId, $field, $value) {
 		$this->update(
-			"UPDATE published_articles SET $field = ? WHERE pub_id = ?", array($value, $pubId)
+			"UPDATE published_articles SET $field = ? WHERE published_article_id = ?", array($value, (int) $publishedArticleId)
 		);
 
 		$this->flushCache();
@@ -773,15 +778,15 @@ class PublishedArticleDAO extends DAO {
 	 */
 	function resequencePublishedArticles($sectionId, $issueId) {
 		$result =& $this->retrieve(
-			'SELECT pa.pub_id FROM published_articles pa, articles a WHERE a.section_id = ? AND a.article_id = pa.article_id AND pa.issue_id = ? ORDER BY pa.seq',
-			array($sectionId, $issueId)
+			'SELECT pa.published_article_id FROM published_articles pa, articles a WHERE a.section_id = ? AND a.article_id = pa.article_id AND pa.issue_id = ? ORDER BY pa.seq',
+			array((int) $sectionId, (int) $issueId)
 		);
 
 		for ($i=1; !$result->EOF; $i++) {
-			list($pubId) = $result->fields;
+			list($publishedArticleId) = $result->fields;
 			$this->update(
-				'UPDATE published_articles SET seq = ? WHERE pub_id = ?',
-				array($i, $pubId)
+				'UPDATE published_articles SET seq = ? WHERE published_article_id = ?',
+				array($i, $publishedArticleId)
 			);
 
 			$result->moveNext();
@@ -794,82 +799,14 @@ class PublishedArticleDAO extends DAO {
 	}
 
 	/**
-	 * Retrieve all authors from published articles
-	 * @param $issueId int
-	 * @return $authors array Author Objects
-	 */
-	function getPublishedArticleAuthors($issueId) {
-		$primaryLocale = AppLocale::getPrimaryLocale();
-		$locale = AppLocale::getLocale();
-
-		$authors = array();
-		$result =& $this->retrieve(
-			'SELECT	aa.*,
-				aspl.setting_value AS affiliation_pl,
-				asl.setting_value AS affiliation_l
-			FROM	authors aa
-				LEFT JOIN published_articles pa ON (pa.article_id = aa.submission_id)
-				LEFT JOIN author_settings aspl ON (aspl.author_id = aa.author_id AND aspl.setting_name = ? AND aspl.locale = ?)
-				LEFT JOIN author_settings asl ON (asl.author_id = aa.author_id AND asl.setting_name = ? AND asl.locale = ?)
-			WHERE	pa.issue_id = ? ORDER BY pa.issue_id',
-			array(
-				'affiliation', $primaryLocale,
-				'affiliation', $locale,
-				(int) $issueId
-			)
-		);
-
-		while (!$result->EOF) {
-			$row = $result->GetRowAssoc(false);
-			$author = new Author();
-			$author->setId($row['author_id']);
-			$author->setSubmissionId($row['article_id']);
-			$author->setFirstName($row['first_name']);
-			$author->setMiddleName($row['middle_name']);
-			$author->setLastName($row['last_name']);
-			$author->setAffiliation($row['affiliation_pl'], $primaryLocale);
-			$author->setAffiliation($row['affiliation_l'], $locale);
-			$author->setEmail($row['email']);
-			$author->setBiography($row['biography']);
-			$author->setPrimaryContact($row['primary_contact']);
-			$author->setSequence($row['seq']);
-			$authors[] = $author;
-			$result->moveNext();
-		}
-
-		$result->Close();
-		unset($result);
-
-		return $authors;
-	}
-
-	/**
 	 * Increment the views count for a galley.
 	 * @param $articleId int
 	 */
 	function incrementViewsByArticleId($articleId) {
 		return $this->update(
 			'UPDATE published_articles SET views = views + 1 WHERE article_id = ?',
-			$articleId
+			(int) $articleId
 		);
-	}
-
-	/**
-	 * Checks if public identifier exists
-	 * @param $publicIssueId string
-	 * @return boolean
-	 */
-	function publicArticleIdExists($publicArticleId, $articleId, $journalId) {
-		$result =& $this->retrieve(
-			'SELECT COUNT(*) FROM published_articles pa, articles a WHERE pa.article_id = a.article_id AND a.journal_id = ? AND pa.public_article_id = ? AND pa.article_id <> ?',
-			array($journalId, $publicArticleId, $articleId)
-		);
-		$returner = $result->fields[0] ? true : false;
-
-		$result->Close();
-		unset($result);
-
-		return $returner;
 	}
 
 	/**
@@ -880,7 +817,7 @@ class PublishedArticleDAO extends DAO {
 	function getArticleYearRange($journalId = null) {
 		$result =& $this->retrieve(
 			'SELECT MAX(pa.date_published), MIN(pa.date_published) FROM published_articles pa, articles a WHERE pa.article_id = a.article_id' . (isset($journalId)?' AND a.journal_id = ?':''),
-			isset($journalId)?$journalId:false
+			isset($journalId)?(int) $journalId:false
 		);
 		$returner = array($result->fields[0], $result->fields[1]);
 

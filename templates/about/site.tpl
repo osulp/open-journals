@@ -1,12 +1,12 @@
 {**
- * site.tpl
+ * templates/about/site.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * About the Journal site.
  *
- * $Id$
  *}
 {strip}
 {assign var="pageTitle" value="about.aboutSite"}
@@ -21,9 +21,9 @@
 
 <div id="journals">
 <h3>{translate key="journal.journals"}</h3>
-<ul class="plain">
+<ul>
 {iterate from=journals item=journal}
-	<li>&#187; <a href="{url journal=$journal->getPath() page="about" op="index"}">{$journal->getLocalizedTitle()|escape}</a></li>
+	<li><a href="{url journal=$journal->getPath() page="about" op="index"}">{$journal->getLocalizedTitle()|escape}</a></li>
 {/iterate}
 </ul>
 </div>

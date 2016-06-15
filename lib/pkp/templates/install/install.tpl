@@ -1,12 +1,12 @@
 {**
- * install.tpl
+ * templates/install/install.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Installation form.
  *
- * $Id$
  *}
 {strip}
 {include file="common/header.tpl"}
@@ -17,9 +17,10 @@
 <!--
 // Ensure that the form submit button cannot be double-clicked
 function doSubmit() {
-	if (document.install.installing.value != 1) {
-		document.install.installing.value = 1;
-		document.install.submit();
+	var installForm = document.getElementById('install');
+	if (installForm.installing.value != 1) {
+		installForm.installing.value = 1;
+		installForm.submit();
 	}
 	return true;
 }
@@ -43,14 +44,14 @@ function doSubmit() {
 
 <div class="separator"></div>
 
-<form method="post" name="install" action="{url op="install"}">
+<form method="post" id="install" action="{url op="install"}">
 <input type="hidden" name="installing" value="0" />
 {include file="common/formErrors.tpl"}
 
 {if $isInstallError}
 <p>
-	<span class="formError">{translate key="installer.installErrorsOccurred"}:</span>
-	<ul class="formErrorList">
+	<span class="pkp_form_error">{translate key="installer.installErrorsOccurred"}:</span>
+	<ul class="pkp_form_error_list">
 		<li>{if $dbErrorMsg}{translate key="common.error.databaseError" error=$dbErrorMsg}{else}{translate key=$errorMsg}{/if}</li>
 	</ul>
 </p>
@@ -78,14 +79,14 @@ function doSubmit() {
 			{foreach from=$localeOptions key=localeKey item=localeName}
 				<input type="checkbox" name="additionalLocales[]" id="additionalLocales-{$localeKey|escape}" value="{$localeKey|escape}"{if in_array($localeKey, $additionalLocales)} checked="checked"{/if} /> <label for="additionalLocales-{$localeKey|escape}">{$localeName|escape} ({$localeKey|escape})</label>
 				{if !$localesComplete[$localeKey]}
-					<span class="formError">*</span>
+					<span class="pkp_form_error">*</span>
 					{assign var=incompleteLocaleFound value=1}
 				{/if}<br />
 			{/foreach}
 			<span class="instruct">{translate key="installer.additionalLocalesInstructions"}</span>
 			{if $incompleteLocaleFound}
 				<br/>
-				<span class="formError">*</span>&nbsp;{translate key="installer.locale.maybeIncomplete"}
+				<span class="pkp_form_error">*</span>&nbsp;{translate key="installer.locale.maybeIncomplete"}
 			{/if}{* $incompleteLocaleFound *}
 		</td>
 	</tr>
@@ -139,7 +140,10 @@ function doSubmit() {
 		</tr>
 		<tr valign="top">
 			<td>&nbsp;</td>
-			<td class="value"><input type="checkbox" name="skipFilesDir" id="skipFilesDir" value="1"{if $skipFilesDir} checked="checked"{/if} /> <label for="skipFilesDir">{translate key="installer.skipFilesDir"}</label></td>
+			<td class="value">
+				<p>{translate key="installer.allowFileUploads" allowFileUploads=$allowFileUploads}</p>
+				<p>{translate key="installer.maxFileUploadSize" maxFileUploadSize=$maxFileUploadSize}</p>
+			</td>
 		</tr>
 	</table>
 
@@ -178,11 +182,15 @@ function doSubmit() {
 	</tr>
 	<tr valign="top">
 		<td class="label">{fieldLabel name="adminPassword" key="user.password"}</td>
-		<td class="value"><input type="password" name="adminPassword" id="adminPassword" value="{$adminPassword|escape}" size="20" maxlength="32" class="textField" /></td>
+		<td class="value"><input type="password" name="adminPassword" id="adminPassword" value="{$adminPassword|escape}" size="20" class="textField" /></td>
+	</tr>
+	<tr valign="top">
+		<td></td>
+		<td><span class="instruct">{translate key="user.register.passwordLengthRestriction" length=$passwordLength}</span></td>
 	</tr>
 	<tr valign="top">
 		<td class="label">{fieldLabel name="adminPassword2" key="user.repeatPassword"}</td>
-		<td class="value"><input type="password" name="adminPassword2" id="adminPassword2" value="{$adminPassword2|escape}" size="20" maxlength="32" class="textField" /></td>
+		<td class="value"><input type="password" name="adminPassword2" id="adminPassword2" value="{$adminPassword2|escape}" size="20" class="textField" /></td>
 	</tr>
 	<tr valign="top">
 		<td width="20%" class="label">{fieldLabel name="adminEmail" key="user.email"}</td>
@@ -242,9 +250,8 @@ function doSubmit() {
 
 <div class="separator"></div>
 
-{if !$skipMiscSettings}
-<div id="miscSettings">
-<h3>{translate key="installer.miscSettings"}</h3>
+<div id="oaiSettings">
+<h3>{translate key="installer.oaiSettings"}</h3>
 
 	<table width="100%" class="data">
 		<tr valign="top">
@@ -259,7 +266,22 @@ function doSubmit() {
 
 	<div class="separator"></div>
 </div>
-{/if}{* !$skipMiscSettings *}
+
+<div id="beaconDiv">
+	<h3>{translate key="installer.beacon"}</h3>
+
+	<table width="100%" class="data">
+		<tr valign="top">
+			<td width="20%" class="label">&nbsp;</td>
+			<td width="80%" class="value">
+				<input type="checkbox" name="enableBeacon" id="enableBeacon" {if $enableBeacon}checked="checked" {/if}/>
+				{fieldLabel name="enableBeacon" key="installer.beacon.enable"}
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div class="separator"></div>
 
 <p><input name="install" type="button" id="install" value="{translate key="installer.installApplication"}" class="button defaultButton" onclick="doSubmit()" /></p>
 

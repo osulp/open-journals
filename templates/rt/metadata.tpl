@@ -1,12 +1,12 @@
 {**
- * metadata.tpl
+ * templates/rt/metadata.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Article reading tools -- article metadata page.
  *
- * $Id$
  *}
 {strip}
 {assign var=pageTitle value="rt.viewMetadata"}
@@ -86,7 +86,7 @@
 	<td>6.</td>
 	<td>{translate key="rt.metadata.dublinCore.contributor"}</td>
 	<td>{translate key="rt.metadata.pkp.sponsors"}</td>
-	<td>{$article->getArticleSponsor()|escape}</td>
+	<td>{$article->getLocalizedSponsor()|escape}</td>
 </tr>
 <tr><td colspan="4" class="separator">&nbsp;</td></tr>
 <tr valign="top">
@@ -137,20 +137,45 @@
 	<td>{translate key="rt.metadata.pkp.uri"}</td>
 	<td><a target="_new" href="{url page="article" op="view" path=$articleId}">{url page="article" op="view" path=$articleId}</a></td>
 </tr>
-{if $issue->getPublished()}
-	{assign var=doi value=$article->getDOI()}
-{else}
-	{assign var=doi value=$article->getDOI(true)}{* Don't affix DOI *}
-{/if}
-{if $doi}
 <tr><td colspan="4" class="separator">&nbsp;</td></tr>
-<tr valign="top">
-	<td>10.</td>
-	<td>{translate key="rt.metadata.dublinCore.identifier"}</td>
-	<td>{translate key="rt.metadata.pkp.doi"}</td>
-	<td>{$doi|escape}</a></td>
-</tr>
-<tr><td colspan="4" class="separator">&nbsp;</td></tr>
+{foreach from=$pubIdPlugins item=pubIdPlugin}
+	{if $issue->getPublished()}
+		{assign var=pubId value=$pubIdPlugin->getPubId($article)}
+	{else}
+		{assign var=pubId value=$pubIdPlugin->getPubId($article, true)}{* Preview rather than assign a pubId *}
+	{/if}
+	{if $pubId}
+		{assign var=pubIdResolvingURL value=$pubIdPlugin->getResolvingURL($currentJournal->getId(), $pubId)}
+		<tr valign="top">
+			<td>10.</td>
+			<td>{translate key="rt.metadata.dublinCore.identifier"}</td>
+			<td>{$pubIdPlugin->getPubIdFullName()|escape} ({$pubIdPlugin->getPubIdDisplayType()|escape})</td>
+			<td>{if $pubIdResolvingURL}<a target="_new" id="pub-id::{$pubIdPlugin->getPubIdType()|escape}" href="{$pubIdResolvingURL|escape}">{$pubIdResolvingURL|escape}</a>{else}{$pubId|escape}{/if}</td>
+		</tr>
+		<tr><td colspan="4" class="separator">&nbsp;</td></tr>
+	{/if}
+{/foreach}
+{assign var=galleys value=$article->getGalleys()}
+{if $galleys}
+	{foreach from=$pubIdPlugins item=pubIdPlugin}
+		{foreach from=$article->getGalleys() item=galley name=galleyList}
+			{if $issue->getPublished()}
+				{assign var=galleyPubId value=$pubIdPlugin->getPubId($galley)}
+			{else}
+				{assign var=galleyPubId value=$pubIdPlugin->getPubId($galley, true)}{* Preview rather than assign a pubId *}
+			{/if}
+			{if $galleyPubId}
+				{assign var=galleyPubIdResolvingURL value=$pubIdPlugin->getResolvingURL($currentJournal->getId(), $galleyPubId)}
+				<tr valign="top">
+					<td>10.</td>
+					<td>{translate key="rt.metadata.dublinCore.identifier"}</td>
+					<td>{$pubIdPlugin->getPubIdFullName()|escape} ({$pubIdPlugin->getPubIdDisplayType()|escape})<br />({$galley->getGalleyLabel()|escape})</td>
+					<td>{if $galleyPubIdResolvingURL}<a target="_new" id="pub-id::{$pubIdPlugin->getPubIdType()|escape}-g{$galley->getId()}" href="{$galleyPubIdResolvingURL|escape}">{$galleyPubIdResolvingURL|escape}</a>{else}{$galleyPubId|escape}{/if}</td>
+				</tr>
+				<tr><td colspan="4" class="separator">&nbsp;</td></tr>
+			{/if}
+		{/foreach}
+	{/foreach}
 {/if}
 <tr valign="top">
 	<td>11.</td>
@@ -192,7 +217,14 @@
 	<td>15.</td>
 	<td>{translate key="rt.metadata.dublinCore.rights"}</td>
 	<td>{translate key="rt.metadata.pkp.copyright"}</td>
-	<td>{$currentJournal->getLocalizedSetting('copyrightNotice')|nl2br}</td>
+	<td>
+		{translate key="submission.copyrightStatement" copyrightHolder=$article->getLocalizedCopyrightHolder()|escape copyrightYear=$article->getCopyrightYear()|escape}<br/>
+		{if $ccLicenseBadge}
+			{$ccLicenseBadge}
+		{elseif $article->getLicenseURL()}
+			<a href="{$article->getLicenseURL()|escape}">{$article->getLicenseURL()|escape}</a>
+		{/if}
+	</td>
 </tr>
 </table>
 

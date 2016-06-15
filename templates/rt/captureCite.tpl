@@ -1,12 +1,12 @@
 {**
- * captureCite.tpl
+ * templates/rt/captureCite.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Article reading tools -- Capture Citation
  *
- * $Id$
  *}
 {strip}
 {assign var=pageTitle value="rt.captureCite"}

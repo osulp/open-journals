@@ -1,12 +1,12 @@
 {**
- * index.tpl
+ * templates/rtadmin/index.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Reading Tools Administrator index.
  *
- * $Id$
  *}
 {strip}
 {assign var="pageTitle" value="rt.readingTools"}
@@ -23,23 +23,23 @@
 
 <div id="rtAdminConfig">
 <h3>{translate key="rt.admin.configuration"}</h3>
-<ul class="plain">
-	<li>&#187; <a href="{url op="settings"}">{translate key="rt.admin.settings"}</a></li>
-	<li>&#187; <a href="{url op="versions"}">{translate key="rt.versions"}</a></li>
+<ul>
+	<li><a href="{url op="settings"}">{translate key="rt.admin.settings"}</a></li>
+	<li><a href="{url op="versions"}">{translate key="rt.versions"}</a></li>
 </ul>
 </div>
 
 <div id="rtAdminManage">
 <h3>{translate key="rt.admin.management"}</h3>
-<ul class="plain">
-	<li>&#187; <a href="{url op="validateUrls"}">{translate key="rt.admin.validateUrls"}</a></li>
+<ul>
+	<li><a href="{url op="validateUrls"}">{translate key="rt.admin.validateUrls"}</a></li>
 </ul>
 </div>
 
 <div id="rtAdminSharing">
 <h3>{translate key="rt.admin.sharing"}</h3>
-<ul class="plain">
-	<li>&#187; <a href="{url op="configureSharing"}">{translate key="rt.admin.configureSharing"}</a></li>
+<ul>
+	<li><a href="{url op="sharingSettings"}">{translate key="rt.admin.configureSharing"}</a></li>
 </ul>
 </div>
 

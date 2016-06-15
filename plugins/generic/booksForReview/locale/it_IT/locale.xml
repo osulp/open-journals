@@ -2,15 +2,16 @@
 <!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
 
 <!--
-  * @file plugins/generic/booksForReview/locale/en_US/locale.xml
+  * plugins/generic/booksForReview/locale/it_IT/locale.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Books for review plugin localization strings for the en_US (U.S. English) locale.
   -->
  
-<locale name="en_US" full_name="U.S. English">
+<locale name="it_IT" full_name="Italiano">
 
 	<!-- Books For Review Notifications -->
 	<message key="plugins.generic.booksForReview.notification.bookRequested">Recensione richiesta. In attesa di conferma dall'editor.</message>
@@ -56,6 +57,7 @@
 	<message key="plugins.generic.booksForReview.editor.confirmRemove">Sei sicuro di voler cancellare quest'autore e pulire la storia della recensione</message>
 	<message key="plugins.generic.booksForReview.editor.selectSubmission"><![CDATA[Seleziona&nbsp;proposta]]></message>
 	<message key="plugins.generic.booksForReview.editor.select">Seleziona</message>
+	<message key="plugins.generic.booksForReview.editor.edit">Edit</message>
 	<message key="plugins.generic.booksForReview.editor.submission">Submission</message>
 	<message key="plugins.generic.booksForReview.editor.bookReviewer">Recensore</message>
 	<message key="plugins.generic.booksForReview.editor.assignBookReviewer">Assegna</message>

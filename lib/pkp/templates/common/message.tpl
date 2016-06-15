@@ -1,7 +1,8 @@
 {**
  * message.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Generic message page.
@@ -17,8 +18,9 @@
 <p>{$messageTranslated}</p>
 
 {if $backLink}
-<p>&#187; <a href="{$backLink}">{translate key="$backLinkLabel"}</a></p>
+	<ul>
+		<li><a href="{$backLink}">{translate key="$backLinkLabel"}</a></p></li>
+	</ul>
 {/if}
 
 {include file="common/footer.tpl"}
-

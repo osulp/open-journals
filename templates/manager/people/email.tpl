@@ -1,12 +1,12 @@
 {**
- * email.tpl
+ * templates/manager/people/email.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Generic email template form
  *
- * $Id$
  *}
 {strip}
 {assign var="pageTitle" value="email.compose"}
@@ -18,19 +18,19 @@
 {literal}
 <!--
 function deleteAttachment(fileId) {
-	document.submit.deleteAttachment.value = fileId;
-	document.submit.submit();
+	document.getElementById('submit').deleteAttachment.value = fileId;
+	document.getElementById('submit').submit();
 }
 // -->
 {/literal}
 </script>
 <div id="genericEmail">
-<form method="post" name="submit" action="{$formActionUrl}"{if $attachmentsEnabled} enctype="multipart/form-data"{/if}>
+<form method="post" id="submit" action="{$formActionUrl}"{if $attachmentsEnabled} enctype="multipart/form-data"{/if}>
 <input type="hidden" name="continued" value="1"/>
 {if $attachmentsEnabled}
 	<input type="hidden" name="deleteAttachment" value="" />
 	{foreach from=$persistAttachments item=temporaryFile}
-		<input type="hidden" name="persistAttachments[]" value="{$temporaryFile->getFileId()}" />
+		<input type="hidden" name="persistAttachments[]" value="{$temporaryFile->getId()}" />
 	{/foreach}
 {/if}
 
@@ -122,7 +122,7 @@ function deleteAttachment(fileId) {
 		{foreach from=$persistAttachments item=temporaryFile}
 			{$attachmentNum|escape}.&nbsp;{$temporaryFile->getOriginalFileName()|escape}&nbsp;
 			({$temporaryFile->getNiceFileSize()})&nbsp;
-			<a href="javascript:deleteAttachment({$temporaryFile->getFileId()})" class="action">{translate key="common.delete"}</a>
+			<a href="javascript:deleteAttachment({$temporaryFile->getId()})" class="action">{translate key="common.delete"}</a>
 			<br/>
 			{assign var=attachmentNum value=$attachmentNum+1}
 		{/foreach}
@@ -135,10 +135,6 @@ function deleteAttachment(fileId) {
 {/if}
 <tr valign="top">
 	<td colspan="2">&nbsp;</td>
-</tr>
-<tr valign="top">
-	<td class="label">{translate key="email.from"}</td>
-	<td class="value">{$from|escape}</td>
 </tr>
 <tr valign="top">
 	<td width="20%" class="label">{fieldLabel name="subject" key="email.subject"}</td>

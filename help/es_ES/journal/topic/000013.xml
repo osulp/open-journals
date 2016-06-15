@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic SYSTEM "../../../../lib/pkp/dtd/helpTopic.dtd">
-
 <!--
   * 000013.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
-  * Distribuido por GNU GPL v2. Para términos completos ve a el archivo docs/COPYING.
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Usuarios - Importar Usuarios
+  * Credits: http://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_%28es_ES%29
   *
-  * Translated by Juan Arias, Corporación Parque Tecnológico de Mérida: juanarias@ula.ve.
+  * Users - Import Users
   *
-  * $Id$
   -->
 
-<topic id="journal/topic/000013" locale="es_ES" title="Importar Usuarios" toc="journal/toc/000002" key="journal.users.importUsers">
+<topic id="journal/topic/000013" locale="es_ES" title="Importar usuarios/as" toc="journal/toc/000002" key="journal.users.importUsers">
 	<section>
-		<![CDATA[<p>OJS proporciona un servicio simple para importar datos de usuarios desde un formato basado en XML, que puede ser generado fácilmente desde otra base de datos de información de usuarios. Consulte la documentación incluida con OJS, para mayor información sobre formatos XML y XML DTD para datos de usuarios.</p>]]>	
+		<![CDATA[<p>OJS ofrece un servicio sencillo para importar datos de usuario/a en formato XML, el cual se puede crear fácilmente desde otras bases de datos de información de usuario. Se puede consultar la documentación incluida en OJS para más información acerca del formato XML y XML DTD para datos de usuario/a.</p>]]>	
 	</section>
-</topic>
+</topic> 

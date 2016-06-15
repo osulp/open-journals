@@ -1,12 +1,12 @@
 {**
- * active.tpl
+ * templates/reviewer/active.tpl
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Show reviewer's active submissions.
  *
- * $Id$
  *}
 <div id="submissions">
 <table class="listing" width="100%">
@@ -22,14 +22,14 @@
 	<tr><td colspan="6" class="headseparator">&nbsp;</td></tr>
 
 {iterate from=submissions item=submission}
-	{assign var="articleId" value=$submission->getArticleId()}
+	{assign var="articleId" value=$submission->getId()}
 	{assign var="reviewId" value=$submission->getReviewId()}
 
 	<tr valign="top">
 		<td>{$articleId|escape}</td>
 		<td>{$submission->getDateNotified()|date_format:$dateFormatTrunc}</td>
 		<td>{$submission->getSectionAbbrev()|escape}</td>
-		<td><a href="{url op="submission" path=$reviewId}" class="action">{$submission->getLocalizedTitle()|strip_unsafe_html|truncate:60:"..."}</a></td>
+		<td><a href="{url op="submission" path=$reviewId}" class="action">{$submission->getLocalizedTitle()|strip_tags|truncate:60:"..."}</a></td>
 		<td class="nowrap">{$submission->getDateDue()|date_format:$dateFormatTrunc}</td>
 		<td>{$submission->getRound()}</td>
 	</tr>

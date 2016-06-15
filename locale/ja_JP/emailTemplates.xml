@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE email_texts SYSTEM "../../lib/pkp/dtd/emailTemplateData.dtd">
+
 <!--
-  * emailTemplateData.xml
+  * locale/ja_JP/emailTemplateData.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Localized email templates XML file.
   *
-  * $Id$
   -->
+
 <email_texts locale="ja_JP">
 	<email_text key="PASSWORD_RESET_CONFIRM">
 		<subject>パスワードリセットの確認</subject>
@@ -136,7 +138,7 @@
 	<email_text key="SUBMISSION_DECISION_REVIEWERS">
 		<subject>「{$articleTitle}」に対する判断</subject>
 		<body>雑誌『{$journalName}』への投稿物「{$articleTitle}」の査読者の1人として、この投稿物の著者に送る査読結果と編集上の判断を送付します。本プロセスの遂行に当たって、貴殿の多大なるご協力に感謝いたします。
- 
+
 {$editorialContactSignature}
 
 {$comments}</body>
@@ -183,6 +185,57 @@
 		<description>このメールは、セクションエディタから査読者に投稿物の査読を依頼するものです。メールには、タイトルや要旨などの投稿物に関する情報、査読期限日、投稿物へのアクセス方法を示しています。このメールは、雑誌設定のステップ2で標準的査読プロセスが選択された場合に使用されます（そうでない場合は、REVIEW_REQUEST_ATTACHEDを参照してください）。</description>
 	</email_text>
 	<email_text key="REVIEW_REQUEST_ONECLICK">
+		<subject>論文査読のお願い</subject>
+		<body>{$reviewerName} 殿:
+
+雑誌『{$journalName}』への投稿原稿「{$articleTitle}」の査読をお願いいたしたくメールを差し上げました。投稿物の要旨を以下に添付しました。貴殿がこの重要な仕事を引き受けてくださることを希望いたしております。
+
+{$weekLaterDate}までに、雑誌のWebサイトにログインして、査読を引き受けていただけるかどうかを示していただけるようお願いいたします。引き受けていただける場合は、このサイトで投稿物にアクセスし、査読結果と答申を記録することができます。雑誌のWebサイトのURLは、{$journalUrl} です。
+
+査読作業自体の期限日は、{$reviewDueDate}です。
+
+投稿物のURL: {$submissionReviewUrl}
+
+よろしくご検討くださるよう、お願いいたします。
+
+{$editorialContactSignature}
+
+
+
+「{$articleTitle}」
+
+{$abstractTermIfEnabled}
+{$articleAbstract}</body>
+		<description>このメールは、セクションエディタから査読者に投稿物の査読を依頼するものです。メールには、タイトルや要旨などの投稿物に関する情報、査読期限日、投稿物へのアクセス方法を示しています。このメールは、雑誌設定のステップ2で標準的査読プロセスが選択され、ワンクリック査読者アクセスが有効な場合に使用されます。</description>
+	</email_text>
+	<email_text key="REVIEW_REQUEST_REMIND_AUTO">
+		<subject>論文査読のお願い</subject>
+		<body>{$reviewerName} 殿:
+
+雑誌『{$journalName}』への投稿原稿「{$articleTitle}」の査読をお願いいたしたくメールを差し上げました。投稿物の要旨を以下に添付しました。貴殿がこの重要な仕事を引き受けてくださることを希望いたしております。
+
+{$weekLaterDate}までに、雑誌のWebサイトにログインして、査読を引き受けていただけるかどうかを示していただけるようお願いいたします。引き受けていただける場合は、このサイトで投稿物にアクセスし、査読結果と答申を記録することができます。雑誌のWebサイトのURLは、{$journalUrl} です。
+
+査読作業自体の期限日は、{$reviewDueDate}です。
+
+雑誌のWebサイトにアクセスするユーザ名とパスワードをお持ちでない場合は、次のリンクを使ってパスワードをリセットしてください（パスワードはユーザ名と共にメールで送信されます）: {$passwordResetUrl}
+
+
+投稿物のURL: {$submissionReviewUrl}
+
+よろしくご検討くださるよう、お願いいたします。
+
+{$editorialContactSignature}
+
+
+
+「{$articleTitle}」
+
+{$abstractTermIfEnabled}
+{$articleAbstract}</body>
+		<description>このメールは、セクションエディタから査読者に投稿物の査読を依頼するものです。メールには、タイトルや要旨などの投稿物に関する情報、査読期限日、投稿物へのアクセス方法を示しています。このメールは、雑誌設定のステップ2で標準的査読プロセスが選択された場合に使用されます（そうでない場合は、REVIEW_REQUEST_REMIND_AUTO_ATTACHEDを参照してください）。</description>
+	</email_text>
+	<email_text key="REVIEW_REQUEST_REMIND_AUTO_ONECLICK">
 		<subject>論文査読のお願い</subject>
 		<body>{$reviewerName} 殿:
 
@@ -391,7 +444,7 @@
 
 原稿のURL: {$submissionCopyeditingUrl}
 ユーザ名: {$authorUsername}
- 
+
 今回この作業を行うことができない場合、あるいは、何かご不明な点がございましたら、ご連絡ください。
 
 よろしくお願いいたします。
@@ -723,7 +776,7 @@
 		<subject>アカウントの確認</subject>
 		<body>{$userFullName} 様
 
-雑誌「{$journalName}」用のアカウントを作成しました。このアカウントを有効にするには、メールアドレスの確認が必要です。以下のリンクをクリックして確認してください。 
+雑誌「{$journalName}」用のアカウントを作成しました。このアカウントを有効にするには、メールアドレスの確認が必要です。以下のリンクをクリックして確認してください。
 Y
 {$activateUrl}
 
@@ -759,8 +812,8 @@ Link: {$url}
 {$principalContactSignature}</body>
 	</email_text>
 	<email_text key="NOTIFICATION_MAILLIST">
-		<subject>{$siteTitle} からの新しいお知らせ</subject>
-		<body>{$siteTitle} からの新しいお知らせです。
+		<subject>{$journalName} からの新しいお知らせ</subject>
+		<body>{$journalName} からの新しいお知らせです。
 --
 {$notificationContents}
 
@@ -772,8 +825,8 @@ Link: {$url}
 {$principalContactSignature}</body>
 	</email_text>
 	<email_text key="NOTIFICATION_MAILLIST_WELCOME">
-		<subject>{$siteTitle} メーリングリストへようこそ！</subject>
-		<body>あなたは {$siteTitle} からのお知らせを受け取ることに同意しました。
+		<subject>{$journalName} メーリングリストへようこそ！</subject>
+		<body>あなたは {$journalName} からのお知らせを受け取ることに同意しました。
 
 メーリングリストにあなたのメールアドレスを追加するために下記の確認リンクをクリックしてください。
 {$confirmLink}
@@ -791,24 +844,13 @@ Link: {$url}
 		<subject>編集者の判断</subject>
 		<body>{$authorName}:
 
-私たちはあなたが {$journalTitle}, に投稿された "{$articleTitle}"  
+私たちはあなたが {$journalTitle}, に投稿された "{$articleTitle}"
 について結論に達しました。
 
 結果:
 
 {$editorialContactSignature}</body>
 		<description></description>
-	</email_text>
-	<email_text key="NOTIFICATION_MAILLIST_PASSWORD">
-		<subject>あなたの {$siteTitle} についての通知メーリングリスト情報</subject>
-		<body>あなたの通知メール停止のための新しいパスワードは
-{$password}
-です。
-
-もし通知メールの受信を停止したい場合は，下記のページであなたのメールアドレスとパスワードを入力してください。
-{$unsubscribeLink} 
-
-{$principalContactSignature}</body>
 	</email_text>
 	<email_text key="EDITOR_DECISION_RESUBMIT">
 		<subject>編集者の判断</subject>

@@ -1,8 +1,10 @@
 <?php
+
 /**
- * @file CustomBlockManagerPlugin.inc.php
+ * @file plugins/generic/customBlockManager/CustomBlockManagerPlugin.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @package plugins.generic.customBlockManager
@@ -53,21 +55,10 @@ class CustomBlockManagerPlugin extends GenericPlugin {
 
 				$blocks = $this->getSetting($journal->getId(), 'blocks');
 				if (!is_array($blocks)) break;
-				$i=0;
+				$i = 0;
 				foreach ($blocks as $block) {
 					$blockPlugin = new CustomBlockPlugin($block, $this->getName());
-
-					// default the block to being enabled
-					if ($blockPlugin->getEnabled() !== false) {
-						$blockPlugin->setEnabled(true);
-					}
-					// default the block to the right sidebar
-					if (!is_numeric($blockPlugin->getBlockContext())) {
-						$blockPlugin->setBlockContext(BLOCK_CONTEXT_RIGHT_SIDEBAR);
-					}
-					$plugins[$blockPlugin->getSeq()][$blockPlugin->getPluginPath() . $i] =& $blockPlugin;
-
-					$i++;
+					$plugins[$blockPlugin->getSeq()][$blockPlugin->getPluginPath() . $i++] =& $blockPlugin;
 					unset($blockPlugin);
 				}
 				break;
@@ -89,10 +80,12 @@ class CustomBlockManagerPlugin extends GenericPlugin {
 	/**
 	 * Perform management functions
 	 */
-	function manage($verb, $args, &$message) {
-		if (!parent::manage($verb, $args, $message)) return false;
+	function manage($verb, $args, &$message, &$messageParams) {
+		if (!parent::manage($verb, $args, $message, $messageParams)) return false;
 		switch ($verb) {
 			case 'settings':
+				$this->import('CustomBlockPlugin');
+
 				$journal =& Request::getJournal();
 
 				$templateMgr =& TemplateManager::getManager();
@@ -143,6 +136,23 @@ class CustomBlockManagerPlugin extends GenericPlugin {
 				} else if ( Request::getUserVar('save') ) {
 					$editData = true;
 					$form->execute();
+
+					// Enable the block plugin and place it in the right sidebar
+					if ($form->validate()) {
+						foreach ($form->getData('blocks') as $block) {
+							$blockPlugin = new CustomBlockPlugin($block, $this->getName());
+
+							// Default the block to being enabled
+							if (!is_bool($blockPlugin->getEnabled())) {
+								$blockPlugin->setEnabled(true);
+							}
+
+							// Default the block to the right sidebar
+							if (!is_numeric($blockPlugin->getBlockContext())) {
+								$blockPlugin->setBlockContext(BLOCK_CONTEXT_RIGHT_SIDEBAR);
+							}
+						}
+					}
 				} else {
 					$form->initData();
 				}

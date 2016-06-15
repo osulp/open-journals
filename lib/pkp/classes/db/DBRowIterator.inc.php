@@ -3,7 +3,8 @@
 /**
  * @file classes/db/DBRowIterator.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2013-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DBRowIterator
@@ -12,8 +13,6 @@
  * @brief Wrapper around ADORecordSet providing "factory" features for generating
  * objects from DAOs.
  */
-
-// $Id$
 
 
 import('lib.pkp.classes.core.ItemIterator');
