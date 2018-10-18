@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE locale SYSTEM "../../lib/pkp/dtd/locale.dtd">
+
+<!--
+  * locale/pt_PT/locale.xml
+  *
+  * Copyright (c) 2013-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+  *
+  * Localization strings for the pt_PT (Português (Portugal)) locale.
+  *
+  -->
+
+<locale name="pt_PT" full_name="Português (Portugal)">
+	<locale name="pt_BR" full_name = "Portugese">
+	<message key="plugins.themes.responsiveTheme.userHome">Página do Utilizador</message>
+	<message key="plugins.themes.responsiveTheme.user">Profil</message>
+	<message key="plugins.themes.responsiveTheme.userManagement">User Management</message>
+	<message key="plugins.themes.responsiveTheme.editorialTeam">Equipa Editorial</message>
+	<message key="plugins.themes.responsiveTheme.news">Notícias</message>
+	<message key="plugins.themes.responsiveTheme.contact">Contato</message>
+	<message key="plugins.themes.responsiveTheme.dashboard">Página do Utilizador</message>
+	<message key="plugins.themes.responsiveTheme.profile">Perfil</message>
+	<message key="plugins.themes.responsiveTheme.myProfile">Perfil</message>
+	<message key="plugins.themes.responsiveTheme.logout">Sair do sistema</message>
+	<message key="plugins.themes.responsiveTheme.share">Compartilhar</message>
+	<message key="plugins.themes.responsiveTheme.advanceSearch">Advanced search</message>
+	<message key="plugins.themes.responsiveTheme.publisherHome">Publisher Home</message>
+	<message key="plugins.themes.responsiveTheme.displayName">responsive Theme</message>
+	<message key="plugins.themes.responsiveTheme.description">A responsive OJS Theme</message>
+        <message key="plugins.block.navigationAtharv.journalContent">Contenido de la revista</message>
+<message key="plugins.themes.responsiveTheme.aboutJournal">Sobre</message>
+	
+	
+	<message key="plugins.themes.responsiveTheme.notWritable">NOTE: This plugin's stylesheet file, "{$stylesheetFileLocation}", is not currently writable. This file must be writable before the plugin can be used.</message>
+	<message key="plugins.themes.responsiveTheme.notWritablePlugin">NOTE: The journal-based stylesheet option is automatically enabled because this plugin's stylesheet file, "{$stylesheetFileLocation}", is not currently writable.</message>
+	<message key="plugins.themes.responsiveTheme.settings">Settings</message>
+	<message key="plugins.themes.responsiveTheme.pickColour">Pick Colour</message>
+	<message key="plugins.themes.responsiveTheme.header">Theme Header Colour</message>
+	<message key="plugins.themes.responsiveTheme.footer">Theme Footer Colour</message>
+	<message key="plugins.themes.responsiveTheme.buttons">Theme Buttons Colour</message>
+	<message key="plugins.themes.responsiveTheme.link">Link</message>
+	<message key="plugins.themes.responsiveTheme.background">Body Background Colour</message>
+	<message key="plugins.themes.responsiveTheme.foreground">Body Text Colour</message>
+	<message key="plugins.themes.responsiveTheme.user.myProfile">My Profile</message>
+	<message key="plugins.themes.responsiveTheme.user.logout">Log Out</message>
+	<message key="plugins.themes.responsiveTheme.user.signOutAsUser">Log Out as User</message>
+	<message key="plugins.themes.responsiveTheme.user.rememberMe">Remember me</message>
+	<message key="plugins.themes.responsiveTheme.perJournal">Journal-based Stylesheet</message>
+	<message key="plugins.themes.responsiveTheme.DOI">DOI</message>
+	<message key="plugins.themes.responsiveTheme.policy">About Journal</message>
+	<message key="plugins.themes.responsiveTheme.current">Actual</message> 
+	<message key="plugins.themes.responsiveTheme.archives">Past Issues</message>
+	<message key="plugins.themes.responsiveTheme.indexing">Indexing</message>
+	<message key="plugins.themes.responsiveTheme.evaluation">INDICATORS EVALUATION OF MAGAZINES</message>
+	<message key="plugins.themes.responsiveTheme.themeDesignAndHosting"><![CDATA[Responsive Theme Design by <a href="http://openjournalsystems.com" title="openjournalsystems.com">OpenJournalSystems.com</a>]]></message>
+</locale>
+
+</locale>
