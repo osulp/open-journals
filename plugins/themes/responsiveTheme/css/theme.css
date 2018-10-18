@@ -1,0 +1,19 @@
+#header, #mainmenu, .dropdown-menu, .dropdown-menu.submenu {background-color: #D92026;border-color: #D92026;}
+#header {border-color: #D92026;}
+#footer {background-color: #D92026;}
+table.listing tr.fastTracked {background-color: #D92026;}
+.navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:hover, .navbar-default .navbar-nav > .open > a:focus, .dropdown-menu > li > a:hover, .dropdown-menu > li > a:focus, .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover, .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus {background-color: #ff5258;}
+.navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus {background-color: #ff5258;}
+.navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus, .dropdown-menu > .active > a, .dropdown-menu > .active > a:hover, .dropdown-menu > .active > a:focus,.navbar-default .navbar-nav > .active > a, .navbar-default .navbar-nav > .active > a:hover, .navbar-default .navbar-nav > .active > a:focus, .navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-nav > li > a:focus {background-color: #ff5258;}
+#pageFooter {background-color: ;}
+#pageFooter-bottom {background-color: ;}
+input.defaultButton {color: #D92026;}
+input.button, .btn-primary, input.button:link, .btn-primary:link  {background-color: #D92026;border-color: #D92026;}
+input.button:hover, .btn-primary:hover, input.button:active, .btn-primary:active, input.button:visited, .btn-primary:visited {background-color: #cf161c;border-color: #cf161c;}
+.btn-primary, .btn-primary:link, a.btn-primary, a.btn-primary:link, input.button:link, .btn-primary:link {color: #ffffff;}
+a,a:link {color: #D92026;}
+a:hover, a:active, a:visited {color: #cf161c;}
+body {background-color: ;}
+input.defaultButton, input.defaultButton:link {background-color: #ffffff;border-color: #cccccc;}
+input.defaultButton:hover, input.defaultButton:active, input.defaultButton:visited, input.defaultButton:focus, input.btn-default:focus {background-color: #ebebeb;border-color: #adadad !important;color: #333;}
+body {color: ;}
